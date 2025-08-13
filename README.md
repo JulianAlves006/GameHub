@@ -37,14 +37,6 @@ mysql -u root -p
 CREATE DATABASE gameHubDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-#### 3.3. Crie um usuário (opcional, mas recomendado)
-```sql
-CREATE USER 'gamehub_user'@'localhost' IDENTIFIED BY 'senha_segura';
-GRANT ALL PRIVILEGES ON gameHubDB.* TO 'gamehub_user'@'localhost';
-FLUSH PRIVILEGES;
-EXIT;
-```
-
 ### 4. Configure as variáveis de ambiente
 
 Crie um arquivo `.env` na raiz do projeto:
