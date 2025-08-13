@@ -8,6 +8,7 @@ const PORT = 3333;
 
 AppDataSource.initialize().then(() => {
     console.log("Database connected");
+    app.emit("ready");
 }).catch((error) => {
     console.log("Error connecting to database", error);
 });
@@ -20,6 +21,8 @@ app.use(express.json());
 app.use("/", routes);
 
 // Start server
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+app.on("ready", () => {
+    app.listen(PORT, () => {
+        console.log(`Server is running on http://localhost:${PORT}`);
+    });
 });

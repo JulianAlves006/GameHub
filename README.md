@@ -32,10 +32,7 @@ npm install
 mysql -u root -p
 ```
 
-#### 3.2. Crie o banco de dados
-```sql
-CREATE DATABASE gameHubDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
+#### 3.2. Crie o banco de dados com o arquivo: database/gameHubDB.sql
 
 ### 4. Configure as variáveis de ambiente
 
@@ -52,15 +49,13 @@ Adicione as seguintes configurações ao arquivo `.env`:
 DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
-DB_PASSWORD=sua_senha_mysql
+DB_PASSWORD=
 DB_NAME=gameHubDB
 
 # Configurações do Servidor
 PORT=3333
 NODE_ENV=development
 ```
-
-> **⚠️ Importante:** Substitua `sua_senha_mysql` pela sua senha real do MySQL
 
 ### 5. Execute o projeto
 
