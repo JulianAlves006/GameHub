@@ -1,0 +1,33 @@
+import { Column, Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from "typeorm";
+import { Gamer } from "./Gamer.js";
+import { Log } from "./Log.js";
+
+@Entity("users")
+export class User {
+    @PrimaryGeneratedColumn()
+    id!: number;
+
+    @Column({ type: "varchar", length: 100 })
+    name!: string;
+
+    @Column({ type: "varchar", length: 150, unique: true })
+    email!: string;
+
+    @Column({ type: "varchar", length: 255 })
+    password!: string;
+
+    @Column({ type: "varchar", length: 50 })
+    profile!: string;
+
+    @CreateDateColumn({ name: "created_at" })
+    createdAt!: Date;
+
+    @UpdateDateColumn({ name: "updated_at" })
+    updatedAt!: Date;
+
+    @OneToMany(() => Gamer, (gamer: Gamer) => gamer.user)
+    gamers!: Gamer[];
+
+    @OneToMany(() => Log, (log: Log) => log.user)
+    logs!: Log[];
+}
