@@ -49,7 +49,6 @@ DB_NAME=gameHubDB
 
 # Configurações do Servidor
 PORT=3333
-NODE_ENV=development
 ```
 
 ### 5. Execute o projeto
