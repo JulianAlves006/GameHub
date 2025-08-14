@@ -1,6 +1,6 @@
 # GameHub
 
-Sistema de gerenciamento de campeonatos e jogadores desenvolvido com Node.js, Express, TypeScript e TypeORM.
+Sistema de gerenciamento de campeonatos e jogadores desenvolvido com React, Node.js, Express, TypeScript e TypeORM.
 
 ## 📋 Pré-requisitos
 
