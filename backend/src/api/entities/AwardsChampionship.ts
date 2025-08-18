@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from "typeorm";
-import { Award } from "./Award.js";
-import { Championship } from "./Championship.js";
+import { Award } from "./Award.ts";
+import { Championship } from "./Championship.ts";
 
 @Entity("awards_championship")
 export class AwardsChampionship {

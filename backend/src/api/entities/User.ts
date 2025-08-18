@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from "typeorm";
-import { Gamer } from "./Gamer.js";
-import { Log } from "./Log.js";
+import { Gamer } from "./Gamer.ts";
+import { Log } from "./Log.ts";
 
 @Entity("users")
 export class User {

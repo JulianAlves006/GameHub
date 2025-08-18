@@ -1,7 +1,7 @@
 import express from "express";
-import { routes } from "./routes.js";
+import { routes } from "./routes.ts";
 import cors from "cors";
-import { AppDataSource } from "./data-source.js";
+import { AppDataSource } from "./data-source.ts";
 
 const app = express();
 const PORT = 3333;
@@ -18,7 +18,7 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-app.use("/", routes); 
+app.use(routes);
 
 // Start server
 app.on("ready", () => {

@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from "typeorm";
-import { Team } from "./Team.js";
-import { Championship } from "./Championship.js";
+import { Team } from "./Team.ts";
+import { Championship } from "./Championship.ts";
 
 @Entity("matches")
 export class Match {

@@ -1,9 +1,9 @@
 import { Column, Entity, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne, JoinColumn } from "typeorm";
-import { User } from "./User.js";
+import { User } from "./User.ts";
 
 @Entity("logs")
 export class Log {
-    @PrimaryGeneratedColumn()
+    @PrimaryGeneratedColumn()   
     id!: number;
 
     @ManyToOne(() => User, (user: User) => user.logs)

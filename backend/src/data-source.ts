@@ -1,13 +1,13 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
-import { User } from "./entities/User.js";
-import { Team } from "./entities/Team.js";
-import { Award } from "./entities/Award.js";
-import { Championship } from "./entities/Championship.js";
-import { AwardsChampionship } from "./entities/AwardsChampionship.js";
-import { Match } from "./entities/Match.js";
-import { Gamer } from "./entities/Gamer.js";
-import { Log } from "./entities/Log.js";
+import { User } from "./api/entities/User.js";
+import { Team } from "./api/entities/Team.js";
+import { Award } from "./api/entities/Award.js";
+import { Championship } from "./api/entities/Championship.js";
+import { AwardsChampionship } from "./api/entities/AwardsChampionship.js";
+import { Match } from "./api/entities/Match.js";
+import { Gamer } from "./api/entities/Gamer.js";
+import { Log } from "./api/entities/Log.js";
 
 export const AppDataSource = new DataSource({
     type: "mysql",

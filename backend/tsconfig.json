@@ -42,5 +42,7 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true
   }
 }
