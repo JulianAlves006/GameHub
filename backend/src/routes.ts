@@ -7,6 +7,6 @@ routes.get("/", (request: Request, response: Response) => {
     return response.json({ hello: "world" });
 });
 
-routes.get("/users", getUsersController);   
+routes.get("/user", getUsersController);   
 
 routes.post("/user", createUserController);

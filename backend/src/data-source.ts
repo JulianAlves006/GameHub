@@ -1,13 +1,6 @@
 import "reflect-metadata";
+import * as entities from "./api/entities/index.ts";
 import { DataSource } from "typeorm";
-import { User } from "./api/entities/User.js";
-import { Team } from "./api/entities/Team.js";
-import { Award } from "./api/entities/Award.js";
-import { Championship } from "./api/entities/Championship.js";
-import { AwardsChampionship } from "./api/entities/AwardsChampionship.js";
-import { Match } from "./api/entities/Match.js";
-import { Gamer } from "./api/entities/Gamer.js";
-import { Log } from "./api/entities/Log.js";
 
 export const AppDataSource = new DataSource({
     type: "mysql",
@@ -16,7 +9,7 @@ export const AppDataSource = new DataSource({
     username: process.env.DB_USER || "root",
     password: process.env.DB_PASSWORD || "",
     database: process.env.DB_NAME || "gameHubDB",
-    entities: [User, Team, Award, Championship, AwardsChampionship, Match, Gamer, Log],
+    entities: Object.values(entities),
     synchronize: true,
     logging: false,
     subscribers: [],

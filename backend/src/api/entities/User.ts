@@ -1,6 +1,7 @@
 import { Column, Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from "typeorm";
 import { Gamer } from "./Gamer.ts";
 import { Log } from "./Log.ts";
+import { Championship } from "./Championship.ts";
 
 @Entity("users")
 export class User {
@@ -30,4 +31,7 @@ export class User {
 
     @OneToMany(() => Log, (log: Log) => log.user)
     logs!: Log[];
+
+    @OneToMany(() => Championship, (championship: Championship) => championship.admin)
+    championships!: Championship[];
 }

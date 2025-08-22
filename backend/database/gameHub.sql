@@ -25,12 +25,12 @@ DROP TABLE IF EXISTS `awards`;
 CREATE TABLE `awards` (
   `id` int NOT NULL AUTO_INCREMENT,
   `description` varchar(100) NOT NULL,
-  `value` tinyint(1) NOT NULL,
-  `medal` tinyint(1) NOT NULL,
-  `trophy` tinyint(1) NOT NULL,
+  `value` tinyint NOT NULL,
+  `medal` tinyint NOT NULL,
+  `trophy` tinyint NOT NULL,
   `others` varchar(100) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -53,13 +53,13 @@ DROP TABLE IF EXISTS `awards_championship`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `awards_championship` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `award_id` int NOT NULL,
-  `championship_id` int NOT NULL,
+  `award_id` int DEFAULT NULL,
+  `championship_id` int DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `award_id` (`award_id`),
-  KEY `championship_id` (`championship_id`),
-  CONSTRAINT `awards_championship_ibfk_1` FOREIGN KEY (`award_id`) REFERENCES `awards` (`id`),
-  CONSTRAINT `awards_championship_ibfk_2` FOREIGN KEY (`championship_id`) REFERENCES `championship` (`id`)
+  KEY `FK_d575f7792a4d65cc337c9e4208d` (`award_id`),
+  KEY `FK_f03b7e3e8da06f6973d23b25a58` (`championship_id`),
+  CONSTRAINT `FK_d575f7792a4d65cc337c9e4208d` FOREIGN KEY (`award_id`) REFERENCES `awards` (`id`),
+  CONSTRAINT `FK_f03b7e3e8da06f6973d23b25a58` FOREIGN KEY (`championship_id`) REFERENCES `championship` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -84,9 +84,12 @@ CREATE TABLE `championship` (
   `name` varchar(100) NOT NULL,
   `start_date` date NOT NULL,
   `end_date` date NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  `admin_id` int NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_award` (`admin_id`),
+  CONSTRAINT `fk_award` FOREIGN KEY (`admin_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -108,17 +111,17 @@ DROP TABLE IF EXISTS `gamers`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gamers` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `team` int NOT NULL,
+  `team` int DEFAULT NULL,
   `shirtNumber` int NOT NULL,
   `score` int NOT NULL,
-  `user_id` int NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `user_id` int DEFAULT NULL,
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   PRIMARY KEY (`id`),
-  KEY `team` (`team`),
-  KEY `user_id` (`user_id`),
-  CONSTRAINT `gamers_ibfk_1` FOREIGN KEY (`team`) REFERENCES `teams` (`id`),
-  CONSTRAINT `gamers_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+  KEY `FK_d2760c804b63fc197ff864c9e9f` (`team`),
+  KEY `FK_2fda9eafac598498eb03a49548f` (`user_id`),
+  CONSTRAINT `FK_2fda9eafac598498eb03a49548f` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
+  CONSTRAINT `FK_d2760c804b63fc197ff864c9e9f` FOREIGN KEY (`team`) REFERENCES `teams` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -140,13 +143,13 @@ DROP TABLE IF EXISTS `logs`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `logs` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `user_id` int NOT NULL,
+  `user_id` int DEFAULT NULL,
   `action` varchar(100) NOT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `description` text,
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   PRIMARY KEY (`id`),
-  KEY `user_id` (`user_id`),
-  CONSTRAINT `logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+  KEY `FK_70c2c3d40d9f661ac502de51349` (`user_id`),
+  CONSTRAINT `FK_70c2c3d40d9f661ac502de51349` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -168,23 +171,23 @@ DROP TABLE IF EXISTS `matches`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `matches` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `team1` int NOT NULL,
-  `team2` int NOT NULL,
+  `team1` int DEFAULT NULL,
+  `team2` int DEFAULT NULL,
   `winner` int DEFAULT NULL,
-  `championship` int NOT NULL,
-  `status` varchar(50) NOT NULL,
+  `championship` int DEFAULT NULL,
+  `status` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `scoreboard` varchar(100) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   PRIMARY KEY (`id`),
-  KEY `team1` (`team1`),
-  KEY `team2` (`team2`),
-  KEY `winner` (`winner`),
-  KEY `championship` (`championship`),
-  CONSTRAINT `matches_ibfk_1` FOREIGN KEY (`team1`) REFERENCES `teams` (`id`),
-  CONSTRAINT `matches_ibfk_2` FOREIGN KEY (`team2`) REFERENCES `teams` (`id`),
-  CONSTRAINT `matches_ibfk_3` FOREIGN KEY (`winner`) REFERENCES `teams` (`id`),
-  CONSTRAINT `matches_ibfk_4` FOREIGN KEY (`championship`) REFERENCES `championship` (`id`)
+  KEY `FK_75e4010c66d5c7755b8108f82e3` (`team1`),
+  KEY `FK_7f184209af2ff0645f5bf9f2303` (`team2`),
+  KEY `FK_46e1e87306e725e0a115d9e326a` (`winner`),
+  KEY `FK_3647c2fbff6f054cce68d5ca13c` (`championship`),
+  CONSTRAINT `FK_3647c2fbff6f054cce68d5ca13c` FOREIGN KEY (`championship`) REFERENCES `championship` (`id`),
+  CONSTRAINT `FK_46e1e87306e725e0a115d9e326a` FOREIGN KEY (`winner`) REFERENCES `teams` (`id`),
+  CONSTRAINT `FK_75e4010c66d5c7755b8108f82e3` FOREIGN KEY (`team1`) REFERENCES `teams` (`id`),
+  CONSTRAINT `FK_7f184209af2ff0645f5bf9f2303` FOREIGN KEY (`team2`) REFERENCES `teams` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -207,9 +210,9 @@ DROP TABLE IF EXISTS `teams`;
 CREATE TABLE `teams` (
   `id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
-  `logo` blob NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `logo` blob,
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -234,24 +237,18 @@ CREATE TABLE `users` (
   `id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
   `email` varchar(150) NOT NULL,
-  `password` varchar(255) NOT NULL,
   `profile` varchar(50) NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  `password` varchar(255) NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  UNIQUE KEY `IDX_97672ac88f789774dd47f7c8be` (`email`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Dumping data for table `users`
 --
-
-LOCK TABLES `users` WRITE;
-/*!40000 ALTER TABLE `users` DISABLE KEYS */;
-/*!40000 ALTER TABLE `users` ENABLE KEYS */;
-UNLOCK TABLES;
-
 --
 -- Dumping routines for database 'gameHubDB'
 --
@@ -265,4 +262,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-08-13 11:13:10
+-- Dump completed on 2025-08-22 17:04:54

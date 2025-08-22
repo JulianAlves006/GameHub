@@ -1,4 +1,5 @@
 import { Column, Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from "typeorm";
+import { AwardsChampionship } from "./AwardsChampionship.ts";
 
 @Entity("awards")
 export class Award {
@@ -8,14 +9,14 @@ export class Award {
     @Column({ type: "varchar", length: 100 })
     description!: string;
 
-    @Column({ type: "boolean" })
-    value!: boolean;
+    @Column({ type: "tinyint" })
+    value!: number;
 
-    @Column({ type: "boolean" })
-    medal!: boolean;
+    @Column({ type: "tinyint" })
+    medal!: number;
 
-    @Column({ type: "boolean" })
-    trophy!: boolean;
+    @Column({ type: "tinyint" })
+    trophy!: number;
 
     @Column({ type: "varchar", length: 100, nullable: true })
     others!: string;
@@ -26,6 +27,6 @@ export class Award {
     @UpdateDateColumn({ name: "updated_at" })
     updatedAt!: Date;
 
-    @OneToMany("AwardsChampionship", "award")
-    awardsChampionships!: any[];
+    @OneToMany(() => AwardsChampionship, (awardsChampionship: AwardsChampionship) => awardsChampionship.award)
+    awardsChampionships!: AwardsChampionship[];
 }
