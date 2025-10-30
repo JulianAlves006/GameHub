@@ -4,8 +4,8 @@ import { toast } from 'react-toastify';
 import api from '../../../services/axios';
 import { useNavigate } from 'react-router-dom';
 import { Alert } from '../../../components/Alert';
-import { SelectedItems } from './styled';
 import Loading from '../../../components/loading';
+import AwardSelector from '../../../components/AwardSelector';
 
 export default function CreateChampionship() {
   const navigate = useNavigate();
@@ -14,7 +14,7 @@ export default function CreateChampionship() {
   const [awards, setAwards] = useState<any[]>([]);
   const [endDate, setEndDate] = useState('');
   const [selectedAwards, setSelectedAwards] = useState<
-    { id: number; description: string }[]
+    { id: number; description: string; uniqueIndex?: number }[]
   >([]);
   const userData = localStorage.getItem('user');
   const user = userData ? JSON.parse(userData) : navigate('/home');
@@ -42,11 +42,29 @@ export default function CreateChampionship() {
     getAwards();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const id = Number(e.target.value);
-    const description = e.target.options[e.target.selectedIndex].text;
+  const handleAwardSelect = (award: {
+    id: number;
+    description: string;
+    uniqueIndex: number;
+  }) => {
+    setSelectedAwards(prev => [
+      ...prev,
+      {
+        id: award.id,
+        description: award.description,
+        uniqueIndex: award.uniqueIndex,
+      },
+    ]);
+  };
 
-    setSelectedAwards(prev => [...prev, { id, description }]);
+  const handleAwardRemove = (index: number) => {
+    setSelectedAwards(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleNewAwardRemove = (uniqueIndex: number) => {
+    setSelectedAwards(prev =>
+      prev.filter(award => award.uniqueIndex !== uniqueIndex)
+    );
   };
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -107,19 +125,14 @@ export default function CreateChampionship() {
             onChange={e => setEndDate(e.target.value)}
           />
         </label>
-        <select name='award' id='award' onChange={handleChange}>
-          <option value={0}>Premios</option>
-          {awards.map(award => (
-            <option key={award.id} value={award.id}>
-              {award.description}
-            </option>
-          ))}
-        </select>
-        <SelectedItems>
-          {selectedAwards.map(sA => (
-            <p>{sA.description}</p>
-          ))}
-        </SelectedItems>
+        <AwardSelector
+          awards={awards}
+          selectedAwards={selectedAwards}
+          onAwardSelect={handleAwardSelect}
+          onAwardRemove={handleAwardRemove}
+          onNewAwardRemove={handleNewAwardRemove}
+          placeholder='Selecionar prêmios'
+        />
         <button>Criar</button>
       </Form>
       <Alert text='ATENÇÃO: Assim que clicar em criar, o seu campeonato automaticamente irá aparecer na lista de campeonatos' />

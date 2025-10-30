@@ -3,9 +3,8 @@ import { Container, Title, Form } from '../../../style';
 import { toast } from 'react-toastify';
 import api from '../../../services/axios';
 import { useNavigate, useParams } from 'react-router-dom';
-import { SelectedItems } from './styled';
 import Loading from '../../../components/loading';
-import { FaTrashAlt, FaTimesCircle } from 'react-icons/fa';
+import AwardSelector from '../../../components/AwardSelector';
 
 export default function EditChampionship() {
   const navigate = useNavigate();
@@ -40,7 +39,7 @@ export default function EditChampionship() {
         const { data } = await api.get(`/championship?idChampionship=${id}`);
         setName(data[0].name);
         const awardsChampionships = data[0].awardsChampionships;
-        const awards = awardsChampionships.map(aC => ({
+        const awards = awardsChampionships.map((aC: any) => ({
           id: aC.award.id,
           description: aC.award.description,
           awardsChampionships: aC.id,
@@ -71,16 +70,21 @@ export default function EditChampionship() {
     getAwards();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const id = Number(e.target.value);
-    const description = e.target.options[e.target.selectedIndex].text;
-    const uniqueIndex = Date.now() + Math.random(); // Índice único baseado em timestamp + random
-
-    setSelectedAwards(prev => [...prev, { id, description, uniqueIndex }]);
-    setAwardsOfChampionship(prev => [
+  const handleAwardSelect = (award: {
+    id: number;
+    description: string;
+    uniqueIndex: number;
+    awardsChampionships: any;
+  }) => {
+    setSelectedAwards(prev => [
       ...prev,
-      { id, description, awardsChampionships: false, uniqueIndex },
+      {
+        id: award.id,
+        description: award.description,
+        uniqueIndex: award.uniqueIndex,
+      },
     ]);
+    setAwardsOfChampionship(prev => [...prev, award]);
   };
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -152,32 +156,14 @@ export default function EditChampionship() {
           placeholder='Nome do seu campeonato'
           onChange={e => setName(e.target.value)}
         />
-        <select name='award' id='award' onChange={handleChange}>
-          <option value={0}>Premios</option>
-          {awards.map(award => (
-            <option key={award.id} value={award.id}>
-              {award.description}
-            </option>
-          ))}
-        </select>
-        <SelectedItems>
-          {awardsOfChampionship.map((sA, index) => (
-            <p key={sA.uniqueIndex}>
-              {sA.description}{' '}
-              {sA.awardsChampionships ? (
-                <FaTrashAlt
-                  style={{ marginLeft: '15px', cursor: 'pointer' }}
-                  onClick={() => handleDelete(index, sA)}
-                />
-              ) : (
-                <FaTimesCircle
-                  style={{ marginLeft: '15px', cursor: 'pointer' }}
-                  onClick={() => handleRemoveNewAward(sA.uniqueIndex)}
-                />
-              )}
-            </p>
-          ))}
-        </SelectedItems>
+        <AwardSelector
+          awards={awards}
+          selectedAwards={awardsOfChampionship}
+          onAwardSelect={handleAwardSelect}
+          onAwardRemove={handleDelete}
+          onNewAwardRemove={handleRemoveNewAward}
+          placeholder='Selecionar prêmios'
+        />
         <button>Editar</button>
       </Form>
     </Container>
