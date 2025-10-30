@@ -1,37 +1,53 @@
-import { Column, Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from "typeorm";
-import { Team } from "./Team.ts";
-import { Championship } from "./Championship.ts";
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  OneToMany,
+} from 'typeorm';
+import { Team } from './Team.ts';
+import { Championship } from './Championship.ts';
+import { Metric } from './Metric.ts';
 
-@Entity("matches")
+@Entity('matches')
 export class Match {
-    @PrimaryGeneratedColumn()
-    id!: number;
+  @PrimaryGeneratedColumn()
+  id!: number;
 
-    @ManyToOne(() => Team, (team: Team) => team.matchesAsTeam1)
-    @JoinColumn({ name: "team1" })
-    team1!: Team;
+  @ManyToOne(() => Team, (team: Team) => team.matchesAsTeam1)
+  @JoinColumn({ name: 'team1' })
+  team1!: Team;
 
-    @ManyToOne(() => Team, (team: Team) => team.matchesAsTeam2)
-    @JoinColumn({ name: "team2" })
-    team2!: Team;
+  @ManyToOne(() => Team, (team: Team) => team.matchesAsTeam2)
+  @JoinColumn({ name: 'team2' })
+  team2!: Team;
 
-    @ManyToOne(() => Team, (team: Team) => team.matchesWon, { nullable: true })
-    @JoinColumn({ name: "winner" })
-    winner!: Team;
+  @ManyToOne(() => Team, (team: Team) => team.matchesWon, { nullable: true })
+  @JoinColumn({ name: 'winner' })
+  winner!: Team;
 
-    @ManyToOne(() => Championship, (championship: Championship) => championship.matches)
-    @JoinColumn({ name: "championship" })
-    championship!: Championship;
+  @ManyToOne(
+    () => Championship,
+    (championship: Championship) => championship.matches
+  )
+  @JoinColumn({ name: 'championship' })
+  championship!: Championship;
 
-    @Column({ type: "varchar", length: 50 })
-    status!: string;
+  @Column({ type: 'varchar', length: 50 })
+  status!: string;
 
-    @Column({ type: "varchar", length: 100, nullable: true })
-    scoreboard!: string;
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  scoreboard!: string;
 
-    @CreateDateColumn({ name: "created_at" })
-    createdAt!: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt!: Date;
 
-    @UpdateDateColumn({ name: "updated_at" })
-    updatedAt!: Date;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt!: Date;
+
+  @OneToMany(() => Metric, (metric: Metric) => metric.match)
+  metrics!: Metric[];
 }

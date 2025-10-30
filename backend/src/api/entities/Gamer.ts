@@ -1,29 +1,49 @@
-import { Column, Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from "typeorm";
-import { Team } from "./Team.ts";
-import { User } from "./User.ts";
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  OneToMany,
+} from 'typeorm';
+import { Team } from './Team.ts';
+import { User } from './User.ts';
+import { Notifications } from './Notifications.ts';
+import { Metric } from './Metric.ts';
 
-@Entity("gamers")
+@Entity('gamers')
 export class Gamer {
-    @PrimaryGeneratedColumn()
-    id!: number;
+  @PrimaryGeneratedColumn()
+  id!: number;
 
-    @ManyToOne(() => Team, (team: Team) => team.gamers)
-    @JoinColumn({ name: "team" })
-    team!: Team;
+  @ManyToOne(() => Team, (team: Team) => team.gamers)
+  @JoinColumn({ name: 'team' })
+  team!: Team;
 
-    @Column({ type: "int", name: "shirtNumber" })
-    shirtNumber!: number;
+  @OneToMany(
+    () => Notifications,
+    (notification: Notifications) => notification.user
+  )
+  notification!: Notifications[];
 
-    @Column({ type: "int" })
-    score!: number;
+  @Column({ type: 'int', name: 'shirtNumber' })
+  shirtNumber!: number;
 
-    @ManyToOne(() => User, (user: User) => user.gamers)
-    @JoinColumn({ name: "user_id" })
-    user!: User;
+  @Column({ type: 'int' })
+  score!: number;
 
-    @CreateDateColumn({ name: "created_at" })
-    createdAt!: Date;
+  @ManyToOne(() => User, (user: User) => user.gamers)
+  @JoinColumn({ name: 'user_id' })
+  user!: User;
 
-    @UpdateDateColumn({ name: "updated_at" })
-    updatedAt!: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt!: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt!: Date;
+
+  @OneToMany(() => Metric, (metric: Metric) => metric.gamer)
+  metrics!: Metric[];
 }

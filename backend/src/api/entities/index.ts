@@ -7,3 +7,5 @@ export { Match } from './Match.ts';
 export { Award } from './Award.ts';
 export { AwardsChampionship } from './AwardsChampionship.ts';
 export { Log } from './Log.ts';
+export { Notifications } from './Notifications.ts';
+export { Metric } from './Metric.ts';

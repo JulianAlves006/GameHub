@@ -1,17 +1,20 @@
-import express from "express";
-import { routes } from "./routes.ts";
-import cors from "cors";
-import { AppDataSource } from "./data-source.ts";
+import 'dotenv/config';
+import express from 'express';
+import { routes } from './routes.ts';
+import cors from 'cors';
+import { AppDataSource } from './data-source.ts';
 
 const app = express();
 const PORT = 3333;
 
-AppDataSource.initialize().then(() => {
-    console.log("Database connected");
-    app.emit("ready");
-}).catch((error) => {
-    console.log("Error connecting to database", error);
-});
+AppDataSource.initialize()
+  .then(() => {
+    console.log('Database connected');
+    app.emit('ready');
+  })
+  .catch(error => {
+    console.log('Error connecting to database', error);
+  });
 
 // Middlewares
 app.use(cors());
@@ -21,8 +24,8 @@ app.use(express.json());
 app.use(routes);
 
 // Start server
-app.on("ready", () => {
-    app.listen(PORT, () => {
-        console.log(`Server is running on http://localhost:${PORT}`);
-    });
+app.on('ready', () => {
+  app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+  });
 });

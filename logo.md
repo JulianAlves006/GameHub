@@ -60,15 +60,19 @@ npm run dev
 ## 🎯 Testando a aplicação
 
 ### 1. Verifique se o servidor está rodando
+
 Acesse: http://localhost:3333
 
 Você deve ver:
+
 ```json
-{"hello":"world"}
+{ "hello": "world" }
 ```
 
 ### 2. Verifique se o banco conectou
+
 No terminal, você deve ver:
+
 ```
 Database connected
 Server is running on http://localhost:3333

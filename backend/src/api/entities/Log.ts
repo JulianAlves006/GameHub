@@ -1,21 +1,28 @@
-import { Column, Entity, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne, JoinColumn } from "typeorm";
-import { User } from "./User.ts";
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+import { User } from './User.ts';
 
-@Entity("logs")
+@Entity('logs')
 export class Log {
-    @PrimaryGeneratedColumn()   
-    id!: number;
+  @PrimaryGeneratedColumn()
+  id!: number;
 
-    @ManyToOne(() => User, (user: User) => user.logs)
-    @JoinColumn({ name: "user_id" })
-    user!: User;
+  @ManyToOne(() => User, (user: User) => user.logs)
+  @JoinColumn({ name: 'user_id' })
+  user!: User;
 
-    @Column({ type: "varchar", length: 100 })
-    action!: string;
+  @Column({ type: 'varchar', length: 100 })
+  action!: string;
 
-    @Column({ type: "text", nullable: true })
-    description!: string;
+  @Column({ type: 'text', nullable: true })
+  description!: string;
 
-    @CreateDateColumn({ name: "created_at" })
-    createdAt!: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt!: Date;
 }
