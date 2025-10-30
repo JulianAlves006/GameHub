@@ -33,7 +33,7 @@ export const Table = ({
   }
   return (
     <TableCard>
-      <>
+      <div>
         {data.length > 0 ? (
           <Data>
             <thead>
@@ -90,7 +90,7 @@ export const Table = ({
             <h1>Nenhum dado encontrado</h1>
           </Center>
         )}
-      </>
+      </div>
     </TableCard>
   );
 };

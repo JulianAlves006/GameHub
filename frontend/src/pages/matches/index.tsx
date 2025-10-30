@@ -1,11 +1,18 @@
 import { useEffect, useState } from 'react';
 import Loading from '../../components/loading';
 import { Title } from '../../style';
-import { Container, Right } from '../../style';
+import { Container } from '../../style';
 import { Table } from '../../components/Table';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import api from '../../services/axios';
+import {
+  PageHeader,
+  FilterSelect,
+  PaginationContainer,
+  PaginationButton,
+  TableContainer,
+} from './styled';
 
 export default function Matches() {
   const navigate = useNavigate();
@@ -13,6 +20,7 @@ export default function Matches() {
   const [filter, setFilter] = useState('');
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [totalPages, setTotalPages] = useState(1);
 
   const id = window.location.search.replace('?', '');
 
@@ -30,79 +38,49 @@ export default function Matches() {
     async function getMatches() {
       setLoading(true);
       try {
-        if (!id) {
-          const { data } = await api.get(`/match?page=${page}`);
-          let frontData;
-          if (
-            filter === 'finished' ||
-            filter === 'playing' ||
-            filter === 'pending'
-          ) {
-            frontData = data
-              ?.filter(d => d.status === filter)
-              .map(d => ({
-                link: d.id,
-                championship: d.championship.name,
-                championshipId: d.championship.id,
-                team1: d.team1.name,
-                team2: d.team2.name,
-                winner: d?.winner?.name ?? 'Indefinido',
-                status: statusFront[d.status as keyof typeof statusFront],
-              }));
-          } else {
-            frontData = data
-              ?.filter(d => d.status !== 'finished')
-              .map(d => ({
-                link: d.id,
-                championship: d.championship.name,
-                championshipId: d.championship.id,
-                team1Name: d.team1.name,
-                team2Name: d.team2.name,
-                team1Id: d.team1.id,
-                team2Id: d.team2.id,
-                winner: d?.winner?.name ?? 'Indefinido',
-                status: statusFront[d.status as keyof typeof statusFront],
-              }));
-          }
+        const endpoint = id
+          ? `/match?page=${page}&idChampionship=${id}`
+          : `/match?page=${page}`;
 
-          setMatches(frontData);
+        const { data } = await api.get(endpoint);
+
+        let frontData;
+        if (
+          filter === 'finished' ||
+          filter === 'playing' ||
+          filter === 'pending'
+        ) {
+          frontData = data
+            ?.filter(d => d.status === filter)
+            .map(d => ({
+              link: d.id,
+              championship: d.championship.name,
+              championshipId: d.championship.id,
+              team1Name: d.team1.name,
+              team2Name: d.team2.name,
+              team1Id: d.team1.id,
+              team2Id: d.team2.id,
+              winner: d?.winner?.name ?? 'Indefinido',
+              status: statusFront[d.status as keyof typeof statusFront],
+            }));
         } else {
-          const { data } = await api.get(
-            `/match?page=${page}&idChampionship=${id}`
-          );
-          let frontData;
-          if (
-            filter === 'finished' ||
-            filter === 'playing' ||
-            filter === 'pending'
-          ) {
-            frontData = data
-              ?.filter(d => d.status === filter)
-              .map(d => ({
-                link: d.id,
-                championship: d.championship.name,
-                championshipId: d.championship.id,
-                team1: d.team1.name,
-                team2: d.team2.name,
-                winner: d?.winner?.name ?? 'Indefinido',
-                status: statusFront[d.status as keyof typeof statusFront],
-              }));
-          } else {
-            frontData = data
-              ?.filter(d => d.status !== 'finished')
-              .map(d => ({
-                link: d.id,
-                championship: d.championship.name,
-                championshipId: d.championship.id,
-                team1: d.team1.name,
-                team2: d.team2.name,
-                winner: d?.winner?.name ?? 'Indefinido',
-                status: statusFront[d.status as keyof typeof statusFront],
-              }));
-          }
-
-          setMatches(frontData);
+          frontData = data
+            ?.filter(d => d.status !== 'finished')
+            .map(d => ({
+              link: d.id,
+              championship: d.championship.name,
+              championshipId: d.championship.id,
+              team1Name: d.team1.name,
+              team2Name: d.team2.name,
+              team1Id: d.team1.id,
+              team2Id: d.team2.id,
+              winner: d?.winner?.name ?? 'Indefinido',
+              status: statusFront[d.status as keyof typeof statusFront],
+            }));
         }
+
+        setMatches(frontData);
+        setTotalPages(Math.ceil((data?.length || 0) / 10));
       } catch (error: any) {
         toast.error(error.response.data.error);
       } finally {
@@ -154,31 +132,67 @@ export default function Matches() {
       element: 'tr',
     },
   ];
+
+  const generatePaginationButtons = () => {
+    const buttons = [];
+    const maxVisiblePages = 5;
+    const startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
+    const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    for (let i = startPage; i <= endPage; i++) {
+      buttons.push(
+        <PaginationButton
+          key={i}
+          onClick={() => setPage(i)}
+          className={page === i ? 'active' : ''}
+        >
+          {i}
+        </PaginationButton>
+      );
+    }
+
+    return buttons;
+  };
   return (
     <Container>
       {loading && <Loading fullscreen message='Carregando dados...' />}
+
       <Title>Partidas</Title>
-      <Right>
-        <select
-          className='filter'
+      <PageHeader>
+        <FilterSelect
           name='filter'
           id='filter'
+          value={filter}
           onChange={e => setFilter(e.target.value)}
         >
-          <option value=''>Filtro</option>
+          <option value=''>Todas as partidas</option>
           <option value='pending'>Pendentes</option>
           <option value='playing'>Jogando</option>
           <option value='finished'>Finalizadas</option>
-        </select>
-      </Right>
-      <Table config={config} data={matches} />
-      <Right>
-        <button onClick={() => setPage(1)}>1</button>
-        <button onClick={() => setPage(2)}>2</button>
-        <button onClick={() => setPage(3)}>3</button>
-        <button onClick={() => setPage(4)}>4</button>
-        <button onClick={() => setPage(5)}>5</button>
-      </Right>
+        </FilterSelect>
+      </PageHeader>
+
+      <TableContainer>
+        <Table config={config} data={matches} />
+      </TableContainer>
+
+      {totalPages > 1 && (
+        <PaginationContainer>
+          <PaginationButton
+            onClick={() => setPage(Math.max(1, page - 1))}
+            disabled={page === 1}
+          >
+            «
+          </PaginationButton>
+          {generatePaginationButtons()}
+          <PaginationButton
+            onClick={() => setPage(Math.min(totalPages, page + 1))}
+            disabled={page === totalPages}
+          >
+            »
+          </PaginationButton>
+        </PaginationContainer>
+      )}
     </Container>
   );
 }

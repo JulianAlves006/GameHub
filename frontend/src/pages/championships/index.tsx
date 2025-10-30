@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Table } from '../../components/Table';
-import { Container, Left, Right, TableOptionsContainer } from '../../style';
-import { Title } from '../../style';
+import { Container, Title } from '../../style';
 import api from '../../services/axios';
 import { toast } from 'react-toastify';
 import { formatDateFullText } from '../../services/utils';
 import { useNavigate } from 'react-router-dom';
 import Loading from '../../components/loading';
+import { PageHeader, FilterSelect, AddButton, TableContainer } from './styled';
 
 export default function Championships() {
   const navigate = useNavigate();
@@ -82,45 +82,30 @@ export default function Championships() {
   return (
     <Container>
       {loading && <Loading fullscreen message='Carregando dados...' />}
-      <Title>Campeonatos</Title>
-      {user.profile == 'admin' ? (
-        <TableOptionsContainer>
-          <Left>
-            <button onClick={() => navigate('/createChampionship')}>
-              Adicionar
-            </button>
-          </Left>
 
-          <Right>
-            <select
-              className='filter'
-              name='filter'
-              id='filter'
-              onChange={e => setFilter(e.target.value)}
-            >
-              <option value=''>Filtro</option>
-              <option value='pending'>Pendentes</option>
-              <option value='happening'>Acontecendo</option>
-              <option value='finished'>Finalizadas</option>
-            </select>
-          </Right>
-        </TableOptionsContainer>
-      ) : (
-        <Right>
-          <select
-            className='filter'
-            name='filter'
-            id='filter'
-            onChange={e => setFilter(e.target.value)}
-          >
-            <option value=''>Filtro</option>
-            <option value='pending'>Pendentes</option>
-            <option value='happening'>Acontecendo</option>
-            <option value='finished'>Finalizadas</option>
-          </select>
-        </Right>
-      )}
-      <Table config={config} data={championships} />
+      <Title>Campeonatos</Title>
+      <PageHeader>
+        {user.profile === 'admin' && (
+          <AddButton onClick={() => navigate('/createChampionship')}>
+            Adicionar Campeonato
+          </AddButton>
+        )}
+        <FilterSelect
+          name='filter'
+          id='filter'
+          value={filter}
+          onChange={e => setFilter(e.target.value)}
+        >
+          <option value=''>Todos os campeonatos</option>
+          <option value='pending'>Pendentes</option>
+          <option value='happening'>Acontecendo</option>
+          <option value='finished'>Finalizados</option>
+        </FilterSelect>
+      </PageHeader>
+
+      <TableContainer>
+        <Table config={config} data={championships} />
+      </TableContainer>
     </Container>
   );
 }

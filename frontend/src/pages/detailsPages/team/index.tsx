@@ -12,6 +12,7 @@ import {
   formatMetricsForChart,
 } from '../../../services/utils';
 import RadarChart from '../../../components/RadarChart';
+import FileInput from '../../../components/FileInput';
 
 export default function Team() {
   const { id } = useParams();
@@ -306,16 +307,16 @@ export default function Team() {
           />
           {isEditing ? (
             <>
-              <label htmlFor='logo'>
-                Logo
-                <input
-                  type='file'
-                  onChange={e => {
-                    const f = e.currentTarget.files?.[0] ?? null;
-                    setLogo(f);
-                  }}
-                />
-              </label>
+              <FileInput
+                id='logo'
+                name='logo'
+                accept='image/*'
+                value={logo}
+                onChange={setLogo}
+                label='Logo do Time'
+                placeholder='Selecionar novo logo'
+                maxSize={5}
+              />
               <Title>
                 <input
                   type='text'

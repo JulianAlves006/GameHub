@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import api from '../../../services/axios';
 import Loading from '../../../components/loading';
+import FileInput from '../../../components/FileInput';
 
 export default function TeamRegister() {
   const navigate = useNavigate();
@@ -74,16 +75,16 @@ export default function TeamRegister() {
           value={name}
           onChange={e => setName(e.target.value)}
         />
-        <label htmlFor='logo'>
-          Logo
-          <input
-            type='file'
-            onChange={e => {
-              const f = e.currentTarget.files?.[0] ?? null;
-              setLogo(f);
-            }}
-          />
-        </label>
+        <FileInput
+          id='logo'
+          name='logo'
+          accept='image/*'
+          value={logo}
+          onChange={setLogo}
+          label='Logo do Time'
+          placeholder='Selecionar logo do time'
+          maxSize={5}
+        />
 
         <button>Criar time</button>
       </Form>

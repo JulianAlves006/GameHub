@@ -1,11 +1,18 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { FaUserAlt } from 'react-icons/fa';
 
 import icon from '../../assets/icon.png';
 import logo from '../../assets/logo.png';
 
-import { Nav, UserInfo, Links } from './styled';
-import { Center } from '../../style';
+import {
+  Nav,
+  UserInfo,
+  Links,
+  LogoSection,
+  NavLink,
+  TeamLogo,
+  UserLink,
+} from './styled';
 import { useEffect, useState } from 'react';
 import api from '../../services/axios';
 import { toast } from 'react-toastify';
@@ -15,6 +22,7 @@ import { markNotificationsAsRead } from '../../services/utils';
 
 export default function Header() {
   const navigate = useNavigate();
+  const location = useLocation();
   const userData = localStorage.getItem('user');
   const user = userData ? JSON.parse(userData) : null;
   const [team, setTeam] = useState<any>(null);
@@ -138,52 +146,47 @@ export default function Header() {
     }
   }
 
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+
   return (
     <>
       {loading && <Loading fullscreen message='Carregando dados...' />}
       <Nav>
-        <img
-          onClick={e => {
-            e.preventDefault();
-            navigate('/home');
-          }}
-          src={icon}
-          className='icon'
-        />
-        <img
-          onClick={e => {
-            e.preventDefault();
-            navigate('/home');
-          }}
-          src={logo}
-          className='logo'
-        />
-        <Center>
-          <Links>
-            <h3>
-              <Link to={'/home'}>Rankings</Link>
-            </h3>
-            <h3>
-              <Link to={'/matches'}>Partidas</Link>
-            </h3>
-            <h3>
-              <Link to={'/championships'}>Campeonatos</Link>
-            </h3>
-            {user?.gamers?.[0]?.score >= 50000 && !team && (
-              <h3>
-                <Link to={`/team`}>Criar time</Link>
-              </h3>
-            )}
-          </Links>
-        </Center>
+        <LogoSection onClick={() => navigate('/home')}>
+          <img src={icon} className='icon' alt='GameHub Icon' />
+          <img src={logo} className='logo' alt='GameHub Logo' />
+        </LogoSection>
+
+        <Links>
+          <NavLink to='/home' className={isActive('/home') ? 'active' : ''}>
+            Rankings
+          </NavLink>
+          <NavLink
+            to='/matches'
+            className={isActive('/matches') ? 'active' : ''}
+          >
+            Partidas
+          </NavLink>
+          <NavLink
+            to='/championships'
+            className={isActive('/championships') ? 'active' : ''}
+          >
+            Campeonatos
+          </NavLink>
+          {user?.gamers?.[0]?.score >= 50000 && !team && (
+            <NavLink to='/team' className={isActive('/team') ? 'active' : ''}>
+              Criar time
+            </NavLink>
+          )}
+        </Links>
+
         {user && (
           <UserInfo>
             {team && (team as any).logo && (
-              <img
-                onClick={e => {
-                  e.preventDefault();
-                  navigate(`/team/${team.id}`);
-                }}
+              <TeamLogo
+                onClick={() => navigate(`/team/${team.id}`)}
                 src={`http://localhost:3333/team/${(team as any).id}/logo`}
                 alt={`${(team as any).name} logo`}
                 onError={e => {
@@ -191,12 +194,12 @@ export default function Header() {
                 }}
               />
             )}
-            <Link className='userLink' to={'/user'}>
+            <UserLink to='/user'>
               <h3>
                 {user?.name}
-                <FaUserAlt style={{ marginLeft: '8px' }} size={25} />
+                <FaUserAlt size={16} />
               </h3>
-            </Link>
+            </UserLink>
           </UserInfo>
         )}
       </Nav>
