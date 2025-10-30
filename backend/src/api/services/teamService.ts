@@ -2,24 +2,29 @@ import { AppDataSource } from '../../data-source.ts';
 import { Gamer } from '../entities/Gamer.ts';
 import { Team } from '../entities/Team.ts';
 import { User } from '../entities/User.ts';
+import { uploadBuffer, deleteObject, getPresignedUrl } from '../../s3.ts';
+import { v4 as uuid } from 'uuid';
 
 const teamRepository = AppDataSource.getRepository(Team);
+const PREFIX = process.env.S3_PUBLIC_PREFIX || 'uploads/teams/';
 
 export async function getTeamLogo(id: number) {
-  // Se você marcou logo com select:false, o addSelect é obrigatório
-  const team = await teamRepository
-    .createQueryBuilder('team')
-    .addSelect('team.logo')
-    .where('team.id = :id', { id })
-    .getOne();
+  const team = await teamRepository.findOne({
+    where: { id },
+  });
 
   if (!team) throw new Error('Time não encontrado');
 
-  if (!team.logo || (team.logo as any).length === 0) {
+  if (!team.logo || team.logo.trim() === '') {
     throw new Error('Logo não encontrado');
   }
 
-  return team;
+  // Retorna a presigned URL do S3 (válida por 1 hora)
+  const logoUrl = await getPresignedUrl(team.logo, 3600);
+  return {
+    ...team,
+    logoUrl,
+  };
 }
 
 export async function getTeams(
@@ -87,7 +92,12 @@ export async function getTeams(
   };
 }
 
-export async function createTeam(name: string, logo: Buffer, user: number) {
+export async function createTeam(
+  name: string,
+  logo: Buffer,
+  contentType: string,
+  user: number
+) {
   const userData = await AppDataSource.getRepository(User).findOne({
     where: {
       id: user,
@@ -109,28 +119,45 @@ export async function createTeam(name: string, logo: Buffer, user: number) {
   });
   if (exist.length > 0) throw new Error('Nome de time já cadastrado!');
 
-  const team = {
-    name,
-    logo,
-    gamer: userData?.gamers[0].id,
-  };
+  // Upload para S3
+  const now = new Date();
+  const ext = contentType.split('/')[1] || 'png';
+  const key = `${PREFIX}${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${uuid()}.${ext}`;
 
-  const newTeam = await teamRepository.save(teamRepository.create(team));
+  await uploadBuffer({
+    key,
+    buffer: logo,
+    contentType,
+  });
+
+  const gamer = userData?.gamers?.[0];
+  if (!gamer) {
+    throw new Error('Gamer não encontrado');
+  }
+
+  const team = teamRepository.create({
+    name,
+    logo: key,
+    gamer: gamer,
+  });
+
+  const newTeam = await teamRepository.save(team);
   const newGamer = {
-    team: newTeam.id,
+    team: newTeam,
   };
   await AppDataSource.getRepository(Gamer)
     .createQueryBuilder()
     .update(Gamer)
     .set(newGamer)
-    .where('id = :id', { id: userData?.gamers?.[0]?.id })
+    .where('id = :id', { id: gamer.id })
     .execute();
   return newTeam;
 }
 
 export async function updateTeam(
   body: Team,
-  logo: Buffer,
+  logo: Buffer | null,
+  contentType: string | null,
   user: { id: number; role: string }
 ) {
   const { id, name } = body;
@@ -162,24 +189,39 @@ export async function updateTeam(
       'O time não pode ser editado enquanto está em uma partida!'
     );
 
-  if (!logo) {
-    const newTeam = {
-      name,
-    };
-    teamRepository
-      .createQueryBuilder()
-      .update(Team)
-      .set(newTeam)
-      .where('id = :id', { id: id })
-      .execute();
-    return 'Time atualizado com sucesso!';
+  let newLogoKey = team.logo;
+
+  if (logo && contentType) {
+    // Deletar logo antigo se existir
+    if (team.logo) {
+      try {
+        await deleteObject({ key: team.logo });
+      } catch (error) {
+        console.error('Erro ao deletar logo antigo:', error);
+        // Não bloqueia a atualização se falhar ao deletar
+      }
+    }
+
+    // Upload do novo logo para S3
+    const now = new Date();
+    const ext = contentType.split('/')[1] || 'png';
+    const key = `${PREFIX}${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${uuid()}.${ext}`;
+
+    await uploadBuffer({
+      key,
+      buffer: logo,
+      contentType,
+    });
+
+    newLogoKey = key;
   }
 
   const newTeam = {
     name,
-    logo,
+    logo: newLogoKey,
   };
-  teamRepository
+
+  await teamRepository
     .createQueryBuilder()
     .update(Team)
     .set(newTeam)

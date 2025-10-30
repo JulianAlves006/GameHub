@@ -7,7 +7,13 @@ class TeamController {
     try {
       const name = req.body.name;
       const logo = req.file.buffer;
-      const response = await teamService.createTeam(name, logo, req.user.id);
+      const contentType = req.file.mimetype;
+      const response = await teamService.createTeam(
+        name,
+        logo,
+        contentType,
+        req.user.id
+      );
       res.status(200).json(response);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -17,7 +23,13 @@ class TeamController {
   updateTeam = async (req: any, res: Response) => {
     try {
       const logo = req.file?.buffer || null;
-      const response = await teamService.updateTeam(req.body, logo, req.user);
+      const contentType = req.file?.mimetype || null;
+      const response = await teamService.updateTeam(
+        req.body,
+        logo,
+        contentType,
+        req.user
+      );
       res.status(200).json(response);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -53,9 +65,8 @@ class TeamController {
       const id = Number(req.params.id);
       if (!Number.isFinite(id)) return res.status(400).send('ID inválido');
       const team = await teamService.getTeamLogo(id);
-      res.setHeader('Content-Type', 'image/png');
-      res.setHeader('Content-Length', String((team.logo as any).length));
-      return res.send(team.logo);
+      // Redireciona para a presigned URL do S3 (válida por 1 hora)
+      return res.redirect(team.logoUrl);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
     }

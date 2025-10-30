@@ -20,8 +20,8 @@ export class Team {
   @Column({ type: 'varchar', length: 100 })
   name!: string;
 
-  @Column({ type: 'longblob', nullable: true })
-  logo!: Buffer;
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  logo!: string | null;
 
   @ManyToOne(() => Gamer, (gamer: Gamer) => gamer.team)
   @JoinColumn({ name: 'gamer_id' })
