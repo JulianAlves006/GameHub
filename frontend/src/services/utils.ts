@@ -167,3 +167,17 @@ export function formatMetricsForChart({
     ],
   };
 }
+
+export async function addScore(score: number, gamer: number) {
+  try {
+    await api.put('/gamer', {
+      id: gamer,
+      score,
+    });
+    toast.success('Score adicionado com sucesso!');
+  } catch (error: any) {
+    toast.error(
+      error?.response?.data?.error || 'Falha ao marcar notificações como lidas'
+    );
+  }
+}

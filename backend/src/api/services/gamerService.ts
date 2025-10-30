@@ -43,7 +43,7 @@ export async function createGamer(body: Gamer) {
 }
 
 export async function updateGamer(body: Gamer) {
-  const { id, shirtNumber, team } = body;
+  const { id, shirtNumber, team, score } = body;
 
   if (!id) throw new Error('ID precisa estar preenchido para a edição');
 
@@ -77,6 +77,7 @@ export async function updateGamer(body: Gamer) {
     const newGamer = {
       team,
       shirtNumber,
+      score,
     };
     await gamerRepository
       .createQueryBuilder()
@@ -85,11 +86,11 @@ export async function updateGamer(body: Gamer) {
       .where('id = :id', { id: id })
       .execute();
   }
-
+  const newScore = gamer.score + score;
   await gamerRepository
     .createQueryBuilder()
     .update(Gamer)
-    .set({ shirtNumber })
+    .set({ shirtNumber, score: newScore })
     .where('id = :id', { id: id })
     .execute();
 

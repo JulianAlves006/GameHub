@@ -35,6 +35,7 @@ import {
 } from './styled';
 import Loading from '../../../components/loading';
 import { FaTrashAlt, FaCheck } from 'react-icons/fa';
+import { addScore } from '../../../services/utils';
 
 export default function Match() {
   const navigate = useNavigate();
@@ -73,6 +74,16 @@ export default function Match() {
     'cartao amarelo',
     'cartao vermelho',
   ];
+
+  const SCORE_VALUES = {
+    gol: 20,
+    defesa: 15,
+    falta: -3,
+    'chute ao gol': 10,
+    assistencia: 10,
+    'cartao amarelo': 0,
+    'cartao vermelho': -5,
+  };
 
   useEffect(() => {
     async function getMatch() {
@@ -215,7 +226,10 @@ export default function Match() {
       setMetricQty(1);
       setMetricDesc('');
       setMetricPlayerId('');
-
+      addScore(
+        SCORE_VALUES[metricType as keyof typeof SCORE_VALUES] * metricQty,
+        metricPlayerId
+      );
       toast.success('Métrica adicionada com sucesso!');
     } catch (error: any) {
       toast.error(error?.response?.data?.error || 'Erro ao adicionar métrica');

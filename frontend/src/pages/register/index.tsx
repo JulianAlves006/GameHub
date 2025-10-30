@@ -49,7 +49,11 @@ export default function Register() {
       toast.success('Usuário criado com sucesso!');
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data));
-      navigate('/gamer');
+
+      // Pequeno delay para garantir que o token seja processado
+      setTimeout(() => {
+        navigate('/gamer');
+      }, 100);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       const errors = error?.response?.data?.error as

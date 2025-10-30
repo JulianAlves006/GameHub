@@ -9,7 +9,7 @@ const api = axios.create({
 api.interceptors.request.use(
   async config => {
     const token = localStorage.getItem('token');
-    if (token) {
+    if (token && token !== 'null' && token !== 'undefined') {
       config.headers.Authorization = `bearer ${token}`;
     }
     return config;
@@ -26,8 +26,17 @@ api.interceptors.response.use(
     const status = error.response ? error.response.status : null;
 
     if (status === 401) {
-      toast.error('Você precisa logar novamente para essa requisição');
+      // Evita múltiplos toasts de erro
+      const lastError = localStorage.getItem('lastErrorTime');
+      const now = Date.now();
+
+      if (!lastError || now - parseInt(lastError) > 2000) {
+        toast.error('Você precisa logar novamente para essa requisição');
+        localStorage.setItem('lastErrorTime', now.toString());
+      }
+
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
     }
     return Promise.reject(error);
   }

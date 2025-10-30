@@ -11,7 +11,9 @@ import AppRoutes from './routes/index.tsx';
 function Layout() {
   const location = useLocation();
   const hideHeader =
-    location.pathname === '/' || location.pathname === '/register';
+    location.pathname === '/' ||
+    location.pathname === '/register' ||
+    location.pathname === '/gamer';
 
   return (
     <>
