@@ -3,7 +3,7 @@ import { Table } from '../../components/Table';
 import { Container, Title } from '../../style';
 import api from '../../services/axios';
 import { toast } from 'react-toastify';
-import { formatDateFullText } from '../../services/utils';
+import { formatDateFullText, getUser } from '../../services/utils';
 import { useNavigate } from 'react-router-dom';
 import Loading from '../../components/loading';
 import { PageHeader, FilterSelect, AddButton, TableContainer } from './styled';
@@ -13,8 +13,7 @@ export default function Championships() {
   const [championships, setChampionships] = useState([]);
   const [filter, setFilter] = useState('');
   const today = new Date().toISOString().split('T')[0];
-  const userData = localStorage.getItem('user');
-  const user = userData ? JSON.parse(userData) : navigate('/home');
+  const user = getUser();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {

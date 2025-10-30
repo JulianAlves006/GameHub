@@ -10,14 +10,14 @@ import { FaCheck, FaEdit, FaWindowClose } from 'react-icons/fa';
 import {
   createNotifications,
   formatMetricsForChart,
+  getUser,
 } from '../../../services/utils';
 import RadarChart from '../../../components/RadarChart';
 import FileInput from '../../../components/FileInput';
 
 export default function Team() {
   const { id } = useParams();
-  const userData = localStorage.getItem('user');
-  const user = userData ? JSON.parse(userData) : null;
+  const user = getUser();
   const [team, setTeam] = useState([]);
   const [gamers, setGamers] = useState([]);
   const [matches, setMatches] = useState([]);

@@ -102,7 +102,7 @@ export default function Register() {
             placeholder='Confirmar senha'
             onChange={e => setPassword2(e.target.value)}
           />
-          <button type='submit'>Logar</button>
+          <button type='submit'>Cadastrar-se</button>
           <Link to='/'>Já tem uma conta? Faça seu login!</Link>
         </Form>
       </FormContainer>

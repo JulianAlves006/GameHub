@@ -5,11 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../../services/axios';
 import Loading from '../../../components/loading';
 import FileInput from '../../../components/FileInput';
+import { getUser } from '../../../services/utils';
 
 export default function TeamRegister() {
   const navigate = useNavigate();
-  const userData = localStorage.getItem('user');
-  const user = userData ? JSON.parse(userData) : null;
+  const user = getUser();
   const [name, setName] = useState('');
   const [logo, setLogo] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);

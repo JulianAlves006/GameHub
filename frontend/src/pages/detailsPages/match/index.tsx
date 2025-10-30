@@ -35,7 +35,7 @@ import {
 } from './styled';
 import Loading from '../../../components/loading';
 import { FaTrashAlt, FaCheck } from 'react-icons/fa';
-import { addScore } from '../../../services/utils';
+import { addScore, getUser } from '../../../services/utils';
 
 export default function Match() {
   const navigate = useNavigate();
@@ -51,8 +51,7 @@ export default function Match() {
     playing: `Jogando`,
     finished: `Finalizada`,
   };
-  const userData = localStorage.getItem('user');
-  const user = userData ? JSON.parse(userData) : null;
+  const user = getUser();
   // estados para o formulário de métricas
   const [metricType, setMetricType] = useState<string>('gol');
   const [metricQty, setMetricQty] = useState<number>(1);

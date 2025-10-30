@@ -18,13 +18,12 @@ import api from '../../services/axios';
 import { toast } from 'react-toastify';
 import Loading from '../../components/loading';
 import { toastConfirm } from '../Notification';
-import { markNotificationsAsRead } from '../../services/utils';
+import { getUser, markNotificationsAsRead } from '../../services/utils';
 
 export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
-  const userData = localStorage.getItem('user');
-  const user = userData ? JSON.parse(userData) : null;
+  const user = getUser();
   const [team, setTeam] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   useEffect(() => {

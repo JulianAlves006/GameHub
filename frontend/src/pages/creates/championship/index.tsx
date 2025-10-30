@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { Alert } from '../../../components/Alert';
 import Loading from '../../../components/loading';
 import AwardSelector from '../../../components/AwardSelector';
+import { getUser } from '../../../services/utils';
 
 export default function CreateChampionship() {
   const navigate = useNavigate();
@@ -16,8 +17,7 @@ export default function CreateChampionship() {
   const [selectedAwards, setSelectedAwards] = useState<
     { id: number; description: string; uniqueIndex?: number }[]
   >([]);
-  const userData = localStorage.getItem('user');
-  const user = userData ? JSON.parse(userData) : navigate('/home');
+  const user = getUser();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -45,14 +45,14 @@ export default function CreateChampionship() {
   const handleAwardSelect = (award: {
     id: number;
     description: string;
-    uniqueIndex: number;
+    uniqueIndex?: number;
   }) => {
     setSelectedAwards(prev => [
       ...prev,
       {
         id: award.id,
         description: award.description,
-        uniqueIndex: award.uniqueIndex,
+        uniqueIndex: award.uniqueIndex ?? Date.now() + Math.random(),
       },
     ]);
   };

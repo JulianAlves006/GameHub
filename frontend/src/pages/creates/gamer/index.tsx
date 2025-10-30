@@ -4,11 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import api from '../../../services/axios';
 import Loading from '../../../components/loading';
+import { getUser } from '../../../services/utils';
 
 export default function Gamer() {
   const navigate = useNavigate();
-  const userData = localStorage.getItem('user');
-  const user = userData ? JSON.parse(userData) : null;
+  const user = getUser();
   const [shirtNumber, setShirtNumber] = useState<number | ''>('');
   const [loading, setLoading] = useState(false);
 

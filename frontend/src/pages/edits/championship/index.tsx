@@ -5,6 +5,7 @@ import api from '../../../services/axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import Loading from '../../../components/loading';
 import AwardSelector from '../../../components/AwardSelector';
+import { getUser } from '../../../services/utils';
 
 export default function EditChampionship() {
   const navigate = useNavigate();
@@ -22,8 +23,7 @@ export default function EditChampionship() {
     { id: number; description: string; uniqueIndex: number }[]
   >([]);
   const [awardsToDelete, setAwardsToDelete] = useState<number[]>([]);
-  const userData = localStorage.getItem('user');
-  const user = userData ? JSON.parse(userData) : navigate('/home');
+  const user = getUser();
   const [loading, setLoading] = useState(false);
   const { id } = useParams();
 

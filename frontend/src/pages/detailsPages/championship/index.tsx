@@ -29,6 +29,7 @@ import {
   AddMatchButton,
 } from './styled';
 import Loading from '../../../components/loading';
+import { getUser } from '../../../services/utils';
 
 export default function Championship() {
   const navigate = useNavigate();
@@ -37,8 +38,7 @@ export default function Championship() {
   const [matches, setMatches] = useState([]);
   const [teams, setTeams] = useState([]);
   const [awards, setAwards] = useState([]);
-  const userData = localStorage.getItem('user');
-  const user = userData ? JSON.parse(userData) : null;
+  const user = getUser();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
