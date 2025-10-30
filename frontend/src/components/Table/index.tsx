@@ -87,7 +87,7 @@ export const Table = ({
           </Data>
         ) : (
           <Center>
-            <h1>Nenhum dado encontrado</h1>
+            <h1 style={{ margin: '20px 0 20px 0' }}>Nenhum dado encontrado</h1>
           </Center>
         )}
       </div>

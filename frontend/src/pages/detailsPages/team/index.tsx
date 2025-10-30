@@ -47,6 +47,7 @@ export default function Team() {
 
   useEffect(() => {
     async function getTeam() {
+      if (!id) return;
       setLoading(true);
       try {
         const { data } = await api.get(`team?id=${id}`);
@@ -102,6 +103,7 @@ export default function Team() {
     }
 
     async function getMatches() {
+      if (!id) return;
       setLoading(true);
       try {
         const { data } = await api.get(`/match?page=${page}&idTeam=${id}`);
@@ -146,7 +148,7 @@ export default function Team() {
 
     getTeam();
     getMatches();
-  }, []);
+  }, [id, page, filter]);
 
   async function handleEdit() {
     setLoading(true);
