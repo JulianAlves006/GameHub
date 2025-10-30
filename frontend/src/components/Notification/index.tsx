@@ -1,6 +1,18 @@
 import { toast } from 'react-toastify';
+import { FaCheck, FaTimes, FaInfoCircle } from 'react-icons/fa';
 
-import { ConfirmButton, CancelButton } from './styled';
+import {
+  NotificationContainer,
+  NotificationContent,
+  NotificationMessage,
+  NotificationDetails,
+  ButtonContainer,
+  ConfirmButton,
+  CancelButton,
+  InfoContainer,
+  InfoIcon,
+  Divider,
+} from './styled';
 
 interface CustomToastProps {
   message: string;
@@ -21,33 +33,48 @@ const CustomToast = ({
   details,
 }: CustomToastProps) =>
   type === 'team_accept' ? (
-    <div>
-      <p>{message}</p>
-      <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-        <ConfirmButton
-          onClick={() => {
-            onConfirm?.();
-            closeToast();
-          }}
-        >
-          Confirmar
-        </ConfirmButton>
-        <CancelButton
-          onClick={() => {
-            onCancel?.();
-            closeToast();
-          }}
-        >
-          Cancelar
-        </CancelButton>
-      </div>
-    </div>
+    <NotificationContainer>
+      <NotificationContent>
+        <NotificationMessage>{message}</NotificationMessage>
+        <ButtonContainer>
+          <ConfirmButton
+            onClick={() => {
+              onConfirm?.();
+              closeToast();
+            }}
+          >
+            <FaCheck size={14} />
+            Confirmar
+          </ConfirmButton>
+          <CancelButton
+            onClick={() => {
+              onCancel?.();
+              closeToast();
+            }}
+          >
+            <FaTimes size={14} />
+            Cancelar
+          </CancelButton>
+        </ButtonContainer>
+      </NotificationContent>
+    </NotificationContainer>
   ) : (
-    <div>
-      <p>{message}</p>
-      <hr />
-      <p style={{ marginTop: '10px' }}>{details}</p>
-    </div>
+    <NotificationContainer>
+      <NotificationContent>
+        <InfoContainer>
+          <InfoIcon>
+            <FaInfoCircle size={16} />
+          </InfoIcon>
+          <NotificationMessage>{message}</NotificationMessage>
+        </InfoContainer>
+        {details && (
+          <>
+            <Divider />
+            <NotificationDetails>{details}</NotificationDetails>
+          </>
+        )}
+      </NotificationContent>
+    </NotificationContainer>
   );
 
 export const toastConfirm = (
