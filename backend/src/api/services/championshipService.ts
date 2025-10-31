@@ -3,6 +3,7 @@ import { Championship } from '../entities/Championship.ts';
 import { Award } from '../entities/Award.ts';
 import { AwardsChampionship } from '../entities/AwardsChampionship.ts';
 import { Match } from '../entities/Match.ts';
+import { createLog } from '../../utils.ts';
 
 const awardsRepository = AppDataSource.getRepository(Award);
 
@@ -114,6 +115,11 @@ export async function createChampionchip(
     await awardsChampionshipRepository.save(newAwardChampionship);
   }
 
+  await createLog(
+    user.id,
+    'CREATE_CHAMPIONSHIP',
+    `Campeonato criado: ${name} (ID: ${response.id})`
+  );
   return newChampionship;
 }
 
@@ -180,6 +186,11 @@ export async function editChampionship(
     .set({ name })
     .where('id = :id', { id })
     .execute();
+  await createLog(
+    user.id,
+    'UPDATE_CHAMPIONSHIP',
+    `Campeonato editado: ${name} (ID: ${id})`
+  );
   return 'Edição realizada com sucesso!';
 }
 
@@ -219,5 +230,10 @@ export async function deleteChampionship(
     await manager.delete(Championship, { id });
   });
 
+  await createLog(
+    user.id,
+    'DELETE_CHAMPIONSHIP',
+    `Campeonato deletado: ${championship.name} (ID: ${id})`
+  );
   return 'Campeonato deletado com sucesso!';
 }

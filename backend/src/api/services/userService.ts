@@ -2,6 +2,7 @@ import argon2 from 'argon2';
 
 import { AppDataSource } from '../../data-source.ts';
 import { User } from '../entities/User.ts';
+import { createLog } from '../../utils.ts';
 const userRepository = AppDataSource.getRepository(User);
 
 export async function getUser(id: number) {
@@ -48,6 +49,11 @@ export async function createUser(body: User) {
 
   const newUser = userRepository.create(user);
   await userRepository.save(newUser);
+  await createLog(
+    newUser.id,
+    'CREATE_USER',
+    `Usuário criado: ${name} (${email})`
+  );
   return newUser;
 }
 
@@ -88,6 +94,7 @@ export async function updateUser(body: User) {
     .where('id = :id', { id })
     .execute();
 
+  await createLog(id, 'UPDATE_USER', `Usuário editado: ${name} (${email})`);
   return 'Usuário editado com sucesso!';
 }
 
@@ -116,5 +123,10 @@ export async function deleteUser(
     .set({ isActive: 0 })
     .where('id = :id', { id })
     .execute();
+  await createLog(
+    userData.id,
+    'DELETE_USER',
+    `Usuário deletado (ID: ${id}) por admin`
+  );
   return `Usuário deletado com sucesso`;
 }

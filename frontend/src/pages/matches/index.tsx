@@ -45,42 +45,44 @@ export default function Matches() {
         const { data } = await api.get(endpoint);
 
         let frontData;
+        // Se houver filtro específico, aplicar filtro
         if (
           filter === 'finished' ||
           filter === 'playing' ||
           filter === 'pending'
         ) {
           frontData = data
-            ?.filter(d => d.status === filter)
-            .map(d => ({
+            ?.filter((d: any) => d.status === filter)
+            .map((d: any) => ({
               link: d.id,
               championship: d.championship.name,
               championshipId: d.championship.id,
-              team1Name: d.team1.name,
-              team2Name: d.team2.name,
-              team1Id: d.team1.id,
-              team2Id: d.team2.id,
+              team1Name: d.team1?.name || 'Não definido',
+              team2Name: d.team2?.name || 'Não definido',
+              team1Id: d.team1?.id,
+              team2Id: d.team2?.id,
               winner: d?.winner?.name ?? 'Indefinido',
               status: statusFront[d.status as keyof typeof statusFront],
             }));
         } else {
+          // Sem filtro: mostrar apenas pendentes e jogando (não mostrar finalizadas)
           frontData = data
-            ?.filter(d => d.status !== 'finished')
-            .map(d => ({
+            ?.filter((d: any) => d.status !== 'finished')
+            .map((d: any) => ({
               link: d.id,
               championship: d.championship.name,
               championshipId: d.championship.id,
-              team1Name: d.team1.name,
-              team2Name: d.team2.name,
-              team1Id: d.team1.id,
-              team2Id: d.team2.id,
+              team1Name: d.team1?.name || 'Não definido',
+              team2Name: d.team2?.name || 'Não definido',
+              team1Id: d.team1?.id,
+              team2Id: d.team2?.id,
               winner: d?.winner?.name ?? 'Indefinido',
               status: statusFront[d.status as keyof typeof statusFront],
             }));
         }
 
-        setMatches(frontData);
-        setTotalPages(Math.ceil((data?.length || 0) / 10));
+        setMatches(frontData || []);
+        setTotalPages(Math.ceil((frontData?.length || 0) / 10));
       } catch (error: any) {
         toast.error(error.response.data.error);
       } finally {
@@ -88,6 +90,7 @@ export default function Matches() {
       }
     }
     getMatches();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, page]);
 
   const config = [
@@ -163,7 +166,10 @@ export default function Matches() {
           name='filter'
           id='filter'
           value={filter}
-          onChange={e => setFilter(e.target.value)}
+          onChange={e => {
+            setFilter(e.target.value);
+            setPage(1); // Resetar página ao mudar filtro
+          }}
         >
           <option value=''>Todas as partidas</option>
           <option value='pending'>Pendentes</option>

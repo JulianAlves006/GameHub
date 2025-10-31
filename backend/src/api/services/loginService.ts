@@ -2,6 +2,7 @@ import { AppDataSource } from '../../data-source.ts';
 import { User } from '../entities/User.ts';
 import argon2 from 'argon2';
 import jwt from 'jsonwebtoken';
+import { createLog } from '../../utils.ts';
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
 
@@ -43,6 +44,7 @@ export async function login(data: any) {
       issuer: 'GameHub',
       audience: 'GameHub-Users',
     });
+    createLog(user.id, 'Login', 'Usuário realizou login no sistema');
     return {
       message: 'Login realizado com sucesso!',
       token: token,

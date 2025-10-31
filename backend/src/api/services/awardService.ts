@@ -1,5 +1,6 @@
 import { AppDataSource } from '../../data-source.ts';
 import { Award } from '../entities/Award.ts';
+import { createLog } from '../../utils.ts';
 
 const awardsRepository = AppDataSource.getRepository(Award);
 
@@ -56,6 +57,11 @@ export async function createAward(
 
   const newAward = awardsRepository.create(award);
   await awardsRepository.save(newAward);
+  await createLog(
+    user.id,
+    'CREATE_AWARD',
+    `Prêmio criado: ${description} (ID: ${newAward.id})`
+  );
   return newAward;
 }
 
@@ -105,6 +111,11 @@ export async function updateAward(
     .where('id = :id', { id })
     .execute();
 
+  await createLog(
+    user.id,
+    'UPDATE_AWARD',
+    `Prêmio editado: ${description} (ID: ${id})`
+  );
   return 'Premio editado com sucesso!';
 }
 
@@ -132,5 +143,10 @@ export async function deleteAward(
     .where('id = :id', { id: id })
     .execute();
 
+  await createLog(
+    user.id,
+    'DELETE_AWARD',
+    `Prêmio deletado: ${award.description} (ID: ${id})`
+  );
   return 'Premio deletado com sucesso!';
 }

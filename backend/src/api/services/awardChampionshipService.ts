@@ -1,6 +1,6 @@
-import { error } from 'console';
 import { AppDataSource } from '../../data-source.ts';
 import { AwardsChampionship } from '../entities/AwardsChampionship.ts';
+import { createLog } from '../../utils.ts';
 
 const awardsChampionshipRepository =
   AppDataSource.getRepository(AwardsChampionship);
@@ -77,5 +77,10 @@ export async function deleteAwardChampionship(
       .execute();
   }
 
+  await createLog(
+    user.id,
+    'DELETE_AWARD_CHAMPIONSHIP',
+    `${ids.length} prêmio(s) removido(s) do campeonato`
+  );
   return 'Deletado com sucesso!';
 }

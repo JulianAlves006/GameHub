@@ -133,6 +133,8 @@ export default function Match() {
       await api.delete(`/match`, {
         params: { id: match[0]?.id },
       });
+      toast.success('Partida deletada com sucesso!');
+      navigate('/matches');
     } catch (error: any) {
       toast.error(error?.response?.data?.error || 'Erro ao deletar partida');
     } finally {

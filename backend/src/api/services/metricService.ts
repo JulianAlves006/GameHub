@@ -2,7 +2,7 @@ import { AppDataSource } from '../../data-source.ts';
 import { Gamer } from '../entities/Gamer.ts';
 import { Match } from '../entities/Match.ts';
 import { Metric } from '../entities/Metric.ts';
-import type { User } from '../entities/User.ts';
+import { createLog } from '../../utils.ts';
 
 const metricRepository = AppDataSource.getRepository(Metric);
 
@@ -65,5 +65,10 @@ export async function createMetric(
   };
   const newMetric = metricRepository.create(metric);
   await metricRepository.save(newMetric);
+  await createLog(
+    user.id,
+    'CREATE_METRIC',
+    `Métrica criada: ${type} (quantidade: ${quantity}) para gamer ${gamerId} (ID: ${newMetric.id})`
+  );
   return newMetric;
 }

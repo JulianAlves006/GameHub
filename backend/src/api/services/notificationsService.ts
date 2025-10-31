@@ -1,6 +1,7 @@
 import { AppDataSource } from '../../data-source.ts';
 import { Notifications } from '../entities/Notifications.ts';
 import type { User } from '../entities/User.ts';
+import { createLog } from '../../utils.ts';
 
 const notificationRepository = AppDataSource.getRepository(Notifications);
 
@@ -37,6 +38,11 @@ export async function createNotifications(
 
   const newnotification = notificationRepository.create(notification);
   await notificationRepository.save(newnotification);
+  await createLog(
+    user_id,
+    'CREATE_NOTIFICATION',
+    `Notificação criada: ${type} para usuário ${user_id} (ID: ${newnotification.id})`
+  );
   return newnotification;
 }
 
@@ -65,5 +71,10 @@ export async function editNotifications(
       .execute();
   }
 
+  await createLog(
+    user.id,
+    'UPDATE_NOTIFICATION',
+    `${ids.length} notificação(ões) marcada(s) como ${read === 1 ? 'lida(s)' : 'não lida(s)'}`
+  );
   return 'Notificações editadas com sucesso!';
 }
