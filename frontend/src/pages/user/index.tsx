@@ -24,11 +24,7 @@ export default function User() {
   >();
 
   const chartData = useMemo(() => {
-    console.log('chartData useMemo - metrics:', metrics);
-    console.log('chartData useMemo - isArray:', Array.isArray(metrics));
-
     if (!metrics) {
-      console.log('Sem métricas, retornando objeto vazio');
       return formatMetricsForChart({
         metrics: {},
         label: user.name || 'Meu Perfil',
@@ -40,7 +36,6 @@ export default function User() {
       label: user.name || 'Meu Perfil',
     });
 
-    console.log('chartData result:', result);
     return result;
   }, [metrics, user.name]);
 
@@ -99,7 +94,6 @@ export default function User() {
       getChampionships();
     } else {
       const gamerMetrics = user?.gamers?.[0]?.metrics;
-      console.log('Métricas do gamer:', gamerMetrics);
       setMetrics(gamerMetrics);
       getMatches();
     }
@@ -124,7 +118,6 @@ export default function User() {
         }));
       setMatches(frontData);
     } catch (error: any) {
-      console.log(error);
       toast.error(error?.data?.response?.error || error);
     } finally {
       setLoading(false);

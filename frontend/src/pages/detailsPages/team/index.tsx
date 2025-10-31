@@ -51,7 +51,6 @@ export default function Team() {
       setLoading(true);
       try {
         const { data } = await api.get(`team?id=${id}`);
-        console.log(data);
         setTeam(data.teams[0]);
         setName(data.teams[0].name);
         const gamersData = data.teams[0].gamers.map(g => {
@@ -90,11 +89,6 @@ export default function Team() {
         }
 
         setTeamMetrics(metricsSum);
-        console.log('Métricas totais do time (após soma):', metricsSum);
-        console.log(
-          'Tipos de métricas encontrados nos dados:',
-          Object.keys(metricsSum)
-        );
       } catch (error) {
         toast.error(error.response.data.error);
       } finally {
@@ -173,7 +167,6 @@ export default function Team() {
       toast.success('Time editado com sucesso');
       return;
     } catch (error) {
-      console.log(error);
       toast.error(error?.response?.data?.error || 'Erro ao editar time');
     } finally {
       setLoading(false);

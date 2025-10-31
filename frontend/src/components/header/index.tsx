@@ -59,7 +59,6 @@ export default function Header() {
 
       unread.forEach((d: any) => {
         if (d.type === 'team_accept') {
-          console.log(d);
           toastConfirm(
             `Jogador ${d?.gamer?.user?.name} quer entrar no seu time. Aceita?`,
             d?.type,
@@ -105,7 +104,6 @@ export default function Header() {
     gamer_id: number,
     team: number
   ) {
-    console.log(user);
     setLoading(true);
     try {
       await api.put('/gamer', {
@@ -122,7 +120,6 @@ export default function Header() {
       });
       toast.success('Aceito com sucesso!');
     } catch (error: any) {
-      console.log(error);
       toast.error(error.response.data.error);
     } finally {
       setLoading(false);

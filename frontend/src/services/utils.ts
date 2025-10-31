@@ -28,7 +28,6 @@ export async function createNotifications(
     return;
   }
   try {
-    console.log('entrou');
     await api.post('/notifications', {
       type,
       user_id,
@@ -84,19 +83,13 @@ export function sumMetrics(
 ): Record<string, number> {
   const metricsSum: Record<string, number> = {};
 
-  console.log('sumMetrics - input:', metricsArray);
-  console.log('sumMetrics - isArray:', Array.isArray(metricsArray));
-
   if (!metricsArray || !Array.isArray(metricsArray)) {
-    console.log('sumMetrics - retornando objeto vazio');
     return metricsSum;
   }
 
   metricsArray.forEach((metric: { type: string; quantity: number }) => {
     const metricType = metric.type?.toLowerCase() || '';
     const quantity = metric.quantity || 0;
-
-    console.log('sumMetrics - processando:', { metricType, quantity });
 
     if (metricType) {
       if (!metricsSum[metricType]) {
@@ -106,7 +99,6 @@ export function sumMetrics(
     }
   });
 
-  console.log('sumMetrics - resultado final:', metricsSum);
   return metricsSum;
 }
 

@@ -27,10 +27,22 @@ export default function CreateMatch() {
     setTeams(data.teams);
   }
 
-  function handleChangeTeam1() {
-    const norm2 = (s?: string) => (s ?? '').toLowerCase();
-    setTeamsFiltred1(teams.filter(t => norm2(t.name).includes(norm2(team1))));
-  }
+  useEffect(() => {
+    if (typeof team1 === 'string' && team1) {
+      setTeamsFiltred1(
+        teams.filter(team =>
+          team?.name?.toLowerCase().startsWith(team1.toLowerCase())
+        )
+      );
+    }
+    if (typeof team2 === 'string' && team2) {
+      setTeamsFiltred2(
+        teams.filter(team =>
+          team?.name?.toLowerCase().startsWith(team2?.toLowerCase())
+        )
+      );
+    }
+  }, [team1, team2]);
 
   function handleSelectTeam1(id: number) {
     const selectedTeam = teams.find(t => t.id === id);
@@ -38,11 +50,6 @@ export default function CreateMatch() {
       setTeam1(selectedTeam);
       setTeamsFiltred1([]);
     }
-  }
-
-  function handleChangeTeam2() {
-    const norm2 = (s?: string) => (s ?? '').toLowerCase();
-    setTeamsFiltred2(teams.filter(t => norm2(t.name).includes(norm2(team2))));
   }
 
   function handleSelectTeam2(id: number) {
@@ -89,7 +96,6 @@ export default function CreateMatch() {
           value={team1.name}
           onChange={e => {
             setTeam1(e.target.value);
-            handleChangeTeam1();
           }}
         />
         {teamsFiltred1.map(tF => (
@@ -104,7 +110,6 @@ export default function CreateMatch() {
           value={team2.name}
           onChange={e => {
             setTeam2(e.target.value);
-            handleChangeTeam2();
           }}
         />
         {teamsFiltred2.map(tF => (

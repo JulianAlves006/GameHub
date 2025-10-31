@@ -89,7 +89,6 @@ export default function Match() {
       setLoading(true);
       try {
         const { data } = await api.get(`/match?idMatch=${id}`);
-        console.log(data);
         setMatch(data);
         setNewScore(data[0].scoreboard || '0 - 0');
         setWinner(data?.[0]?.winner?.name || 'Indefinido');
@@ -102,7 +101,6 @@ export default function Match() {
         const team2Gamers = data?.[0]?.team2?.gamers || [];
         setGamers([...team1Gamers, ...team2Gamers]);
       } catch (error: any) {
-        console.log(error);
         toast.error(error.response.data.error);
       } finally {
         setLoading(false);

@@ -58,7 +58,6 @@ export default function TeamRegister() {
       toast.success('Time criado com sucesso! Boa sorte nessa nova jornada!');
       navigate(`/team/${data?.id}`);
     } catch (error: any) {
-      console.log(error);
       toast.error(error.response.data.error);
     } finally {
       setLoading(false);

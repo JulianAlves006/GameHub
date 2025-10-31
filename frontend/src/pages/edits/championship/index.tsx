@@ -47,7 +47,6 @@ export default function EditChampionship() {
         }));
         setAwardsOfChampionship(awards);
       } catch (error: any) {
-        console.log(error);
         toast.error(error?.response?.data?.error || 'Erro ao buscar dados');
       } finally {
         setLoading(false);
@@ -96,7 +95,6 @@ export default function EditChampionship() {
         return;
       }
 
-      console.log(selectedAwards);
       const awardsSelectedsIDS = selectedAwards.map(sA => sA.id);
 
       if (awardsToDelete.length > 0) {

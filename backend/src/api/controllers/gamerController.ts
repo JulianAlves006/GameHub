@@ -25,7 +25,6 @@ class GamerController {
       const response = await gamerService.updateGamer(req.body);
       res.status(200).json(response);
     } catch (error: any) {
-      console.log(error);
       return res.status(500).json({ error: error.message });
     }
   };
