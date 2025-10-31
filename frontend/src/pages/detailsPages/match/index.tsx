@@ -264,7 +264,8 @@ export default function Match() {
       {match.length > 0 ? (
         <>
           <Title>
-            {match[0].team1.name} x {match[0].team2.name}
+            {match[0]?.team1?.name || 'Não encontrado'} x{' '}
+            {match[0]?.team2?.name || 'Não encontrado'}
           </Title>
           <Card>
             <Meta>
@@ -312,20 +313,22 @@ export default function Match() {
             </Meta>
 
             <Row>
-              <Team>
-                {match[0].team1.logo && (
-                  <Logo
-                    src={`http://localhost:3333/team/${match[0].team1.id}/logo`}
-                    alt={match[0].team1.name}
-                    onClick={() => navigate(`/team/${match[0].team1.id}`)}
-                  />
-                )}
-                <Name>
-                  <Link to={`/team/${match[0].team1.id}`}>
-                    {match[0].team1.name}
-                  </Link>
-                </Name>
-              </Team>
+              {match[0].team1 && (
+                <Team>
+                  {match[0].team1.logo && (
+                    <Logo
+                      src={`http://localhost:3333/team/${match[0].team1.id}/logo`}
+                      alt={match[0].team1.name}
+                      onClick={() => navigate(`/team/${match[0].team1.id}`)}
+                    />
+                  )}
+                  <Name>
+                    <Link to={`/team/${match[0].team1.id}`}>
+                      {match[0].team1.name}
+                    </Link>
+                  </Name>
+                </Team>
+              )}
 
               <Score>
                 {isEditing ? (
@@ -355,46 +358,51 @@ export default function Match() {
                 )}
               </Score>
 
-              <Team className='right'>
-                <Name>
-                  <Link to={`/team/${match[0].team2.id}`}>
-                    {match[0].team2.name}
-                  </Link>
-                </Name>
-                {match[0].team2.logo && (
-                  <Logo
-                    src={`http://localhost:3333/team/${match[0].team2.id}/logo`}
-                    alt={match[0].team2.name}
-                    onClick={() => navigate(`/team/${match[0].team2.id}`)}
-                  />
-                )}
-              </Team>
-              {!match[0].winner && winner === 'Indefinido' && (
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    width: '245%',
-                  }}
-                >
-                  <button
-                    onClick={() => {
-                      handleWinner(match[0].team1.id);
-                      setWinner(match[0].team1.name);
-                    }}
-                  >
-                    Definir time 1 vencedor
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleWinner(match[0].team2.id);
-                      setWinner(match[0].team2.name);
-                    }}
-                  >
-                    Definir time 2 vencedor
-                  </button>
-                </div>
+              {match[0].team2 && (
+                <Team className='right'>
+                  <Name>
+                    <Link to={`/team/${match[0].team2.id}`}>
+                      {match[0].team2.name}
+                    </Link>
+                  </Name>
+                  {match[0].team2.logo && (
+                    <Logo
+                      src={`http://localhost:3333/team/${match[0].team2.id}/logo`}
+                      alt={match[0].team2.name}
+                      onClick={() => navigate(`/team/${match[0].team2.id}`)}
+                    />
+                  )}
+                </Team>
               )}
+              {!match[0].winner &&
+                winner === 'Indefinido' &&
+                match[0].team1 &&
+                match[0].team2 && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      width: '245%',
+                    }}
+                  >
+                    <button
+                      onClick={() => {
+                        handleWinner(match[0].team1.id);
+                        setWinner(match[0].team1.name);
+                      }}
+                    >
+                      Definir time 1 vencedor
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleWinner(match[0].team2.id);
+                        setWinner(match[0].team2.name);
+                      }}
+                    >
+                      Definir time 2 vencedor
+                    </button>
+                  </div>
+                )}
             </Row>
             <Center>
               <h1>Vencedor</h1>

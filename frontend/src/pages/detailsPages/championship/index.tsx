@@ -83,7 +83,7 @@ export default function Championship() {
 
       for (const m of matches) {
         for (const team of [m.team1, m.team2]) {
-          if (!seen.has(team.id)) {
+          if (team && team.id && !seen.has(team.id)) {
             seen.add(team.id);
             next.push(team);
           }
@@ -124,33 +124,41 @@ export default function Championship() {
                   onClick={() => navigate(`/match/${m.id}`)}
                 >
                   <MatchContent>
-                    <MatchTeam>
-                      <MatchLogo
-                        src={`http://localhost:3333/team/${m.team1.id}/logo`}
-                        alt={`${m.team1.name} logo`}
-                        onError={e => (e.currentTarget.style.display = 'none')}
-                        onClick={e => {
-                          e.stopPropagation();
-                          navigate(`/team/${m.team1.id}`);
-                        }}
-                      />
-                      <MatchTeamName>{m.team1.name}</MatchTeamName>
-                    </MatchTeam>
+                    {m.team1 && (
+                      <MatchTeam>
+                        <MatchLogo
+                          src={`http://localhost:3333/team/${m.team1.id}/logo`}
+                          alt={`${m.team1.name} logo`}
+                          onError={e =>
+                            (e.currentTarget.style.display = 'none')
+                          }
+                          onClick={e => {
+                            e.stopPropagation();
+                            navigate(`/team/${m.team1.id}`);
+                          }}
+                        />
+                        <MatchTeamName>{m.team1.name}</MatchTeamName>
+                      </MatchTeam>
+                    )}
                     <MatchVS>
                       <span>VS</span>
                     </MatchVS>
-                    <MatchTeam className='right'>
-                      <MatchLogo
-                        src={`http://localhost:3333/team/${m.team2.id}/logo`}
-                        alt={`${m.team2.name} logo`}
-                        onError={e => (e.currentTarget.style.display = 'none')}
-                        onClick={e => {
-                          e.stopPropagation();
-                          navigate(`/team/${m.team2.id}`);
-                        }}
-                      />
-                      <MatchTeamName>{m.team2.name}</MatchTeamName>
-                    </MatchTeam>
+                    {m.team2 && (
+                      <MatchTeam className='right'>
+                        <MatchLogo
+                          src={`http://localhost:3333/team/${m.team2.id}/logo`}
+                          alt={`${m.team2.name} logo`}
+                          onError={e =>
+                            (e.currentTarget.style.display = 'none')
+                          }
+                          onClick={e => {
+                            e.stopPropagation();
+                            navigate(`/team/${m.team2.id}`);
+                          }}
+                        />
+                        <MatchTeamName>{m.team2.name}</MatchTeamName>
+                      </MatchTeam>
+                    )}
                   </MatchContent>
                 </MatchCard>
               ))

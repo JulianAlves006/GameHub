@@ -197,8 +197,8 @@ export async function updateTeam(
       try {
         await deleteObject({ key: team.logo });
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Erro ao deletar logo antigo:', error);
-        // Não bloqueia a atualização se falhar ao deletar
       }
     }
 
