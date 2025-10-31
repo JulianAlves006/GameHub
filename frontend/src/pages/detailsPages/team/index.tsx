@@ -30,7 +30,7 @@ export default function Team() {
   const [teamMetrics, setTeamMetrics] = useState<Record<string, number>>({});
 
   const haveTeamIsgamer =
-    user?.gamers?.length > 0 && user.gamers[0]?.team === null;
+    user?.profile === 'gamer' && user.gamers[0]?.team === null;
 
   function verifyHability(score: number) {
     if (score <= 9999) return 'Iniciante';
