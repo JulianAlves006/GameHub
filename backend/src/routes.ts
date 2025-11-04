@@ -17,15 +17,6 @@ import awsController from './api/controllers/awsController.ts';
 
 export const routes = Router();
 
-const BUCKET = process.env.S3_BUCKET!;
-const PREFIX = process.env.S3_PUBLIC_PREFIX || '';
-const EXPIRES = Number(process.env.SIGNED_URL_EXPIRES || 300);
-
-function ensureImageMime(mime: string) {
-  // ajuste conforme sua regra
-  return /^image\/(png|jpe?g|webp|gif|avif)$/.test(mime);
-}
-
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
