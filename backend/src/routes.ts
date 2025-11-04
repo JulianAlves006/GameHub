@@ -1,13 +1,5 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { v4 as uuid } from 'uuid';
-import { presignPut, presignGet, deleteObject } from './s3.ts';
-import type {
-  PresignReadQuery,
-  PresignUploadBody,
-  DeleteBody,
-} from './types.d.ts';
-import express, { type Request, type Response } from 'express';
 
 import UserController from './api/controllers/usersController.ts';
 import loginController from './api/controllers/loginController.ts';
@@ -21,6 +13,7 @@ import matchController from './api/controllers/matchController.ts';
 import awardChampionshipController from './api/controllers/awardChampionshipController.ts';
 import notificationController from './api/controllers/notificationController.ts';
 import metricController from './api/controllers/metricController.ts';
+import awsController from './api/controllers/awsController.ts';
 
 export const routes = Router();
 
@@ -140,71 +133,11 @@ routes.get('/metric', metricController.getMetric);
 
 routes.post('/metric', authMiddleware, metricController.createMetric);
 
-routes.post(
-  '/s3/presign-upload',
-  authMiddleware,
-  async (req: Request<unknown, unknown, PresignUploadBody>, res: Response) => {
-    try {
-      const { contentType, extension } = req.body || {};
-      if (!contentType)
-        return res.status(400).json({ error: 'contentType é obrigatório' });
-      if (!ensureImageMime(contentType))
-        return res.status(400).json({ error: 'MIME inválido' });
-
-      const now = new Date();
-      const ext = (extension || contentType.split('/')[1] || 'bin').replace(
-        /[^a-z0-9]/gi,
-        ''
-      );
-      const key = `${PREFIX}${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${uuid()}.${ext}`;
-
-      const uploadUrl = await presignPut({
-        key,
-        contentType,
-        expiresIn: EXPIRES,
-      });
-      res.json({ uploadUrl, key, bucket: BUCKET, expiresIn: EXPIRES });
-    } catch (e) {
-      console.error(e);
-      res.status(500).json({ error: 'Falha ao gerar URL de upload' });
-    }
-  }
-);
+//Rotas do s3  ---------------------------------------------------------------------------------------------------------------------------------------------------
+routes.post('/s3/presign-upload', authMiddleware, awsController.createImg);
 
 // 2) Gerar URL de leitura
-routes.get(
-  '/s3/presign-read',
-  async (
-    req: Request<unknown, unknown, unknown, PresignReadQuery>,
-    res: Response
-  ) => {
-    try {
-      const { key, ttl } = req.query;
-      if (!key) return res.status(400).json({ error: 'key é obrigatória' });
-
-      const expiresIn = Number(ttl || EXPIRES);
-      const url = await presignGet({ key, expiresIn });
-      res.json({ url, expiresIn });
-    } catch (e) {
-      console.error(e);
-      res.status(500).json({ error: 'Falha ao gerar URL de leitura' });
-    }
-  }
-);
+routes.get('/s3/presign-read', awsController.getUrl);
 
 // 3) Deletar objeto
-routes.delete(
-  '/s3/object',
-  async (req: Request<unknown, unknown, DeleteBody>, res: Response) => {
-    try {
-      const { key } = req.body || {};
-      if (!key) return res.status(400).json({ error: 'key é obrigatória' });
-
-      await deleteObject({ key });
-      res.json({ ok: true });
-    } catch (e) {
-      console.error(e);
-      res.status(500).json({ error: 'Falha ao deletar objeto' });
-    }
-  }
-);
+routes.delete('/s3/object', awsController.deleteImg);
