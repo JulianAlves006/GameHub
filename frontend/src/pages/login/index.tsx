@@ -7,12 +7,14 @@ import { FormContainer, Logo } from './styled';
 import logo from '../../assets/logo.png';
 import api from '../../services/axios';
 import { toast } from 'react-toastify';
+import { useApp } from '../../contexts/AppContext';
 
 export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const ctx = useApp();
 
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -34,8 +36,8 @@ export default function Login() {
         email,
         password,
       });
+      ctx.setUser(data.user);
       localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
       toast.success('Login realizado com sucesso!');
       navigate('/home');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

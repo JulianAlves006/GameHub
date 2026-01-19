@@ -1,5 +1,5 @@
-import { Log, User } from './api/entities/index.ts';
-import { AppDataSource } from './data-source.ts';
+import { Log, User } from '../../api/entities/index.ts';
+import { AppDataSource } from '../../data-source.ts';
 
 const logRepository = AppDataSource.getRepository(Log);
 
@@ -9,7 +9,7 @@ export async function createLog(
   description: string
 ) {
   if (!user_id || !action || !description)
-    throw new Error('Todas as informações precisam estar preenchidas!');
+    throw new Error('Todas as informações precisam estar preenchidas no log!');
 
   const log = logRepository.create({
     user: { id: user_id } as User,

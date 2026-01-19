@@ -7,9 +7,11 @@ import logo from '../../assets/logo.png';
 import { toast } from 'react-toastify';
 import api from '../../services/axios';
 import Loading from '../../components/loading';
+import { useApp } from '../../contexts/AppContext';
 
 export default function Register() {
   const navigate = useNavigate();
+  const ctx = useApp();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -48,7 +50,6 @@ export default function Register() {
       });
       toast.success('Usuário criado com sucesso!');
       localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data));
 
       // Pequeno delay para garantir que o token seja processado
       setTimeout(() => {

@@ -5,11 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../../services/axios';
 import Loading from '../../../components/loading';
 import FileInput from '../../../components/FileInput';
-import { getUser } from '../../../services/utils';
+import { useApp } from '../../../contexts/AppContext';
 
 export default function TeamRegister() {
+  const ctx = useApp();
   const navigate = useNavigate();
-  const user = getUser();
+  const user = ctx.user;
   const [name, setName] = useState('');
   const [logo, setLogo] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -18,7 +19,7 @@ export default function TeamRegister() {
     if (!user || user.profile === 'admin') {
       toast.error('Você não possui permissão para acessar essa pagina');
       navigate('/home');
-    } else if (user.gamers[0].score < 50000) {
+    } else if ((user?.gamers?.[0]?.score ?? 0) < 50000) {
       toast.error(
         'Somente gamers com mais de 50.000 pontos de score podem criar times.'
       );
@@ -30,7 +31,7 @@ export default function TeamRegister() {
   async function verifyUserTeam() {
     setLoading(true);
     try {
-      const { data } = await api.get(`/team?idAdmin=${user.gamers[0].id}`);
+      const { data } = await api.get(`/team?idAdmin=${user?.gamers?.[0]?.id}`);
       if (data.teams.length > 0) {
         toast.error('Seu usuário já possui um time cadastrado.');
         navigate('/home');

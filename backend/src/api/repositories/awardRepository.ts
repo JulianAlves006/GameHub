@@ -1,21 +1,9 @@
 import { AppDataSource } from '../../data-source.ts';
-import { Award } from '../entities/Award.ts';
-import { createLog } from '../../utils.ts';
+import { Award } from '../entities/index.ts';
 
 const awardsRepository = AppDataSource.getRepository(Award);
 
-export async function getAwards(id: number) {
-  if (id) {
-    const awards = awardsRepository.find({
-      relations: {
-        awardsChampionships: { award: true },
-      },
-      where: {
-        admin: { id: id },
-      },
-    });
-    return awards;
-  }
+export async function getAwards() {
   const awards = awardsRepository.find({
     relations: {
       awardsChampionships: { award: true },
@@ -24,44 +12,21 @@ export async function getAwards(id: number) {
   return awards;
 }
 
-export async function createAward(
-  body: Award,
-  user: { id: number; role: string }
-) {
-  const { description, value, medal, trophy, others } = body;
-  if (
-    !description ||
-    value === null ||
-    value === undefined ||
-    medal === null ||
-    medal === undefined ||
-    trophy === null ||
-    trophy === undefined ||
-    !others
-  )
-    throw new Error('Todas as informações devem estar preenchidas!');
+export async function getAwardByID(id: number) {
+  const awards = awardsRepository.find({
+    relations: {
+      awardsChampionships: { award: true },
+    },
+    where: {
+      admin: { id: id },
+    },
+  });
+  return awards;
+}
 
-  if (user.role !== 'admin')
-    throw new Error(
-      'Somente usuários administradores podem realizar esta ação!'
-    );
-
-  const award = {
-    description,
-    value,
-    medal,
-    trophy,
-    others,
-    admin: { id: user.id },
-  };
-
+export async function createAward(award: Award): Promise<Award> {
   const newAward = awardsRepository.create(award);
   await awardsRepository.save(newAward);
-  await createLog(
-    user.id,
-    'CREATE_AWARD',
-    `Prêmio criado: ${description} (ID: ${newAward.id})`
-  );
   return newAward;
 }
 
@@ -70,18 +35,6 @@ export async function updateAward(
   user: { id: number; role: string }
 ) {
   const { id, description, value, medal, trophy, others } = body;
-  if (
-    !id ||
-    !description ||
-    value === null ||
-    value === undefined ||
-    medal === null ||
-    medal === undefined ||
-    trophy === null ||
-    trophy === undefined ||
-    !others
-  )
-    throw new Error('Todas as informações devem estar preenchidas!');
 
   const award = await awardsRepository.findOne({
     where: { id: id },
@@ -111,11 +64,6 @@ export async function updateAward(
     .where('id = :id', { id })
     .execute();
 
-  await createLog(
-    user.id,
-    'UPDATE_AWARD',
-    `Prêmio editado: ${description} (ID: ${id})`
-  );
   return 'Premio editado com sucesso!';
 }
 
@@ -123,7 +71,6 @@ export async function deleteAward(
   id: number,
   user: { id: number; role: string }
 ) {
-  if (!id) throw new Error('Insirá o ID');
   const award = await awardsRepository.findOne({
     where: { id: id },
     relations: {
@@ -143,10 +90,5 @@ export async function deleteAward(
     .where('id = :id', { id: id })
     .execute();
 
-  await createLog(
-    user.id,
-    'DELETE_AWARD',
-    `Prêmio deletado: ${award.description} (ID: ${id})`
-  );
-  return 'Premio deletado com sucesso!';
+  return { text: 'Premio deletado com sucesso!', award };
 }

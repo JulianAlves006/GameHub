@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { Data, TableCard } from './styled';
 import { Center } from '../../style';
+import withoutLogo from '../../assets/withoutLogo.png';
+import Loading from '../loading';
 
 interface Config {
   key: string;
@@ -13,7 +16,7 @@ interface Config {
 }
 
 interface TableProps {
-  data: Array<[]>;
+  data: Record<string, unknown>[];
   config: Config[];
   isTeams?: boolean;
   currentPage?: number;
@@ -28,8 +31,25 @@ export const Table = ({
   itemsPerPage = 10,
 }: TableProps) => {
   const navigate = useNavigate();
+  const [loadingImages, setLoadingImages] = useState<Record<number, boolean>>(
+    {}
+  );
+
   function handleClick(id: number) {
     navigate(`/team/${id}`);
+  }
+
+  function handleImageLoad(id: number) {
+    setLoadingImages(prev => ({ ...prev, [id]: false }));
+  }
+
+  function handleImageStartLoad(id: number) {
+    setLoadingImages(prev => {
+      if (prev[id] === undefined) {
+        return { ...prev, [id]: true };
+      }
+      return prev;
+    });
   }
   return (
     <TableCard>
@@ -67,15 +87,48 @@ export const Table = ({
                           </Link>
                         </b>
                       ) : conf.key === 'logo' && isTeams ? (
-                        <img
-                          style={{ cursor: 'pointer' }}
-                          src={`http://localhost:3333/team/${d.id}/logo`}
-                          alt={`${d.name} logo`}
-                          onError={e =>
-                            (e.currentTarget.style.display = 'none')
-                          }
-                          onClick={() => handleClick(d.id)}
-                        />
+                        <div
+                          style={{
+                            position: 'relative',
+                            display: 'inline-block',
+                          }}
+                        >
+                          {(loadingImages[d.id] === undefined ||
+                            loadingImages[d.id]) && (
+                            <div
+                              style={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%)',
+                                zIndex: 1,
+                              }}
+                            >
+                              <Loading size='sm' />
+                            </div>
+                          )}
+                          <img
+                            style={{
+                              cursor: 'pointer',
+                              objectFit: 'cover',
+                              opacity: loadingImages[d.id] === false ? 1 : 0,
+                              transition: 'opacity 0.3s',
+                            }}
+                            src={`http://localhost:3333/team/${d.id}/logo`}
+                            alt={`${d.name} logo`}
+                            onLoad={() => handleImageLoad(d.id)}
+                            onError={e => {
+                              e.currentTarget.src = withoutLogo;
+                              handleImageLoad(d.id);
+                            }}
+                            onLoadStart={() => {
+                              if (loadingImages[d.id] === undefined) {
+                                handleImageStartLoad(d.id);
+                              }
+                            }}
+                            onClick={() => handleClick(d.id)}
+                          />
+                        </div>
                       ) : (
                         d[conf.key]
                       )}

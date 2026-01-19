@@ -1,43 +1,64 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Card, Container, Left, Title } from '../../style';
+import { Card, Container, Left, Right, Title } from '../../style';
 import { UserData, InfoCard, TeamInfo, InfoLabel, InfoValue } from './styled';
 import api from '../../services/axios';
 import { toast } from 'react-toastify';
 import { Table } from '../../components/Table';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import Loading from '../../components/loading';
 import { FaEdit, FaWindowClose, FaCheck } from 'react-icons/fa';
 import { isEmail } from 'validator';
-import { formatMetricsForChart, getUser } from '../../services/utils';
+import { formatMetricsForChart } from '../../services/utils';
 import RadarChart from '../../components/RadarChart';
+import { useNotifications } from '../../hooks/useNotifications';
+import { useApp } from '../../contexts/AppContext';
+import { type Team, type Championship, type Match } from '../../types/types';
 export default function User() {
-  const user = getUser();
-  const [matches, setMatches] = useState([]);
-  const [championships, setChampionships] = useState([]);
+  const ctx = useApp();
+  const { id } = useParams();
+  const accessUser = ctx.user;
+  const [user, setUser] = useState(ctx.user);
+  const [matches, setMatches] = useState<
+    {
+      link: number | undefined;
+      championship: string | undefined;
+      championshipId: number | undefined;
+      team1: string | undefined;
+      team2: string | undefined;
+      winner: string;
+      status: string;
+    }[]
+  >([]);
+  const [championships, setChampionships] = useState<Championship[]>([]);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const { createNotifications } = useNotifications({ setLoading });
 
-  const [name, setName] = useState(user.name);
-  const [email, setEmail] = useState(user.email);
+  const [name, setName] = useState(user?.name || '');
+  const [email, setEmail] = useState(user?.email || '');
   const [metrics, setMetrics] = useState<
     { type: string; quantity: number }[] | undefined
   >();
+  const [canInviteToTeam, setCanInviteToTeam] = useState<{
+    show: boolean;
+    teamInfo: Team | null;
+  }>({ show: false, teamInfo: null });
 
   const chartData = useMemo(() => {
     if (!metrics) {
       return formatMetricsForChart({
         metrics: {},
-        label: user.name || 'Meu Perfil',
+        label: user?.name || 'Meu Perfil',
       });
     }
 
     const result = formatMetricsForChart({
       metrics: metrics,
-      label: user.name || 'Meu Perfil',
+      label: user?.name || 'Meu Perfil',
     });
 
     return result;
-  }, [metrics, user.name]);
+  }, [metrics, user?.name]);
 
   function verifyHability(score: number) {
     if (score <= 9999) return 'Iniciante';
@@ -89,32 +110,97 @@ export default function User() {
     },
   ];
 
+  //Verifica se é pra trazer os dados de um usuário aleatório ou do usuário que acessou o sistema
   useEffect(() => {
-    if (user.profile === 'admin') {
+    if (id) {
+      getUserData(Number(id));
+    }
+  }, [id]);
+
+  // Atualiza name e email automaticamente quando user mudar
+  useEffect(() => {
+    if (user?.name) setName(user.name);
+    if (user?.email) setEmail(user.email);
+  }, [user]);
+
+  useEffect(() => {
+    if (user?.profile === 'admin') {
       getChampionships();
     } else {
       const gamerMetrics = user?.gamers?.[0]?.metrics;
       setMetrics(gamerMetrics);
       getMatches();
     }
-  }, []);
+  }, [user]);
+
+  useEffect(() => {
+    async function checkCanInvite() {
+      const result = await verifyInviteTeamButtom();
+      if (result.show) {
+        setCanInviteToTeam(result);
+      }
+    }
+    checkCanInvite();
+  }, [user]);
+
+  async function verifyInviteTeamButtom() {
+    try {
+      let userTeam;
+      console.log(user);
+      if (!user?.gamers?.[0]?.team) {
+        userTeam = await api.get(`/team?idAdmin=${user?.gamers?.[0].id}`);
+      }
+      const accesUserTeam = await api.get(
+        `/team?idAdmin=${accessUser?.gamers?.[0].id}`
+      );
+
+      console.log('userTeam', userTeam);
+      console.log('accesUserTeam', accesUserTeam);
+
+      if (
+        userTeam?.data.teams.length > 0 &&
+        accesUserTeam.data.teams.length > 0 &&
+        accessUser?.profile === 'gamer'
+      )
+        return { show: true, teamInfo: accesUserTeam.data.teams[0] };
+
+      return { show: false, teamInfo: null };
+    } catch (error: any) {
+      toast.error(error?.data?.response?.error || error);
+      return { show: false, teamInfo: null };
+    }
+  }
+
+  async function getUserData(id: number) {
+    try {
+      setLoading(true);
+      const { data } = await api.get(`/user?id=${id}`);
+      setUser(data[0]);
+    } catch (error: any) {
+      toast.error(error?.data?.response?.error || error);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function getChampionships() {
     setLoading(true);
     try {
-      const { data } = await api.get(`/championship?idAdmin=${user.id}`);
+      const { data } = await api.get<Championship[]>(
+        `/championship?idAdmin=${user?.id}`
+      );
       setChampionships(data);
       const dataFormated = data.map(d => d.matches).flat();
       const frontData = dataFormated
-        ?.filter(d => d.status !== 'finished')
+        ?.filter(d => d?.status !== 'finished')
         .map(d => ({
-          link: d.id,
-          championship: d.championship.name,
-          championshipId: d.championship.id,
-          team1: d.team1.name,
-          team2: d.team2.name,
+          link: d?.id,
+          championship: d?.championship?.name,
+          championshipId: d?.championship?.id,
+          team1: d?.team1?.name,
+          team2: d?.team2?.name,
           winner: d?.winner?.name ?? 'Indefinido',
-          status: statusFront[d.status as keyof typeof statusFront],
+          status: statusFront[d?.status as keyof typeof statusFront],
         }));
       setMatches(frontData);
     } catch (error: any) {
@@ -128,20 +214,22 @@ export default function User() {
     setLoading(true);
     try {
       // Verifica se o gamer tem um time antes de buscar partidas
-      if (!user.gamers[0].team) {
+      if (!user?.gamers?.[0]?.team) {
         setMatches([]);
         return;
       }
 
-      const { data } = await api.get(`match?idTeam=${user.gamers[0].team.id}`);
+      const { data } = await api.get<Match[]>(
+        `match?idTeam=${user?.gamers?.[0]?.team.id}`
+      );
       const frontData = data
         ?.filter(d => d.status !== 'finished')
         .map(d => ({
           link: d.id,
-          championship: d.championship.name,
-          championshipId: d.championship.id,
-          team1: d.team1.name,
-          team2: d.team2.name,
+          championship: d.championship?.name,
+          championshipId: d.championship?.id,
+          team1: d.team1?.name,
+          team2: d.team2?.name,
           winner: d?.winner?.name ?? 'Indefinido',
           status: statusFront[d.status as keyof typeof statusFront],
         }));
@@ -176,28 +264,51 @@ export default function User() {
     }
     try {
       await api.put('/user', {
-        id: user.id,
+        id: user?.id,
         name,
         email,
       });
       toast.success('Usuário editado com sucesso!');
       setIsEditing(false);
-      localStorage.setItem(
-        'user',
-        JSON.stringify({
+      if (user) {
+        ctx.setUser({
           ...user,
           name,
           email,
-        })
-      );
+        });
+      }
     } catch (error: any) {
       toast.error(error?.data?.response?.erro || 'Erro ao editar usuário');
     }
   }
 
+  async function handleNotification() {
+    console.log(canInviteToTeam.teamInfo);
+    if (
+      !user?.id ||
+      !accessUser?.gamers?.[0]?.id ||
+      !canInviteToTeam.teamInfo?.id
+    )
+      return;
+    await createNotifications(
+      'team_invite',
+      user.id,
+      accessUser.gamers[0].id,
+      ``,
+      canInviteToTeam.teamInfo.id
+    );
+  }
+
   return (
     <Container>
-      {user.profile !== 'admin' && (
+      {canInviteToTeam.show && (
+        <Right>
+          <button onClick={handleNotification}>
+            Solicitar para jogador entrar no time
+          </button>
+        </Right>
+      )}
+      {user?.profile !== 'admin' && user?.id === accessUser?.id && (
         <>
           <Left>
             {isEditing ? (
@@ -241,7 +352,7 @@ export default function User() {
           </Left>
         </>
       )}
-      {championships.length > 0 && user.profile === 'admin' && (
+      {championships.length > 0 && user?.profile === 'admin' && (
         <Left>
           <Link style={{ marginTop: '10px' }} to={'/awards'}>
             Criar premios
@@ -261,7 +372,7 @@ export default function User() {
         )}
       </Title>
       <UserData>
-        {user.profile === 'admin' ? (
+        {user?.profile === 'admin' ? (
           <>
             <InfoCard>
               <li>
@@ -329,28 +440,28 @@ export default function User() {
                       onChange={e => setEmail(e.target.value)}
                     />
                   ) : (
-                    user.email
+                    user?.email
                   )}
                 </InfoValue>
               </li>
               <li>
                 <InfoLabel>Score:</InfoLabel>
                 <InfoValue>
-                  {user.gamers[0].score} - Nível:{' '}
-                  {verifyHability(user.gamers[0].score)}
+                  {user?.gamers?.[0]?.score} - Nível:{' '}
+                  {verifyHability(user?.gamers?.[0]?.score ?? 0)}
                 </InfoValue>
               </li>
               <li>
                 <InfoLabel>Time:</InfoLabel>
                 <TeamInfo>
                   <span>
-                    {user.gamers[0].team?.name ??
+                    {user?.gamers?.[0]?.team?.name ??
                       'não cadastrado em nenhum time'}
                   </span>
-                  {user.gamers[0].team && (
+                  {user?.gamers?.[0]?.team && (
                     <img
-                      src={`http://localhost:3333/team/${user.gamers[0].team.id}/logo`}
-                      alt={`${user.gamers[0].team.name} logo`}
+                      src={`http://localhost:3333/team/${user?.gamers?.[0]?.team.id}/logo`}
+                      alt={`${user?.gamers?.[0]?.team.name} logo`}
                       onError={e => (e.currentTarget.style.display = 'none')}
                     />
                   )}
@@ -399,7 +510,7 @@ export default function User() {
             </Card>
           </>
         )}
-        {user.profile !== 'admin' && metrics && (
+        {user?.profile !== 'admin' && metrics && (
           <RadarChart
             config={{
               type: 'radar',

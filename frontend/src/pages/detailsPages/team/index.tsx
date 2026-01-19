@@ -7,20 +7,30 @@ import { Table } from '../../../components/Table';
 import { toast } from 'react-toastify';
 import Loading from '../../../components/loading';
 import { FaCheck, FaEdit, FaWindowClose } from 'react-icons/fa';
-import {
-  createNotifications,
-  formatMetricsForChart,
-  getUser,
-} from '../../../services/utils';
+import { formatMetricsForChart } from '../../../services/utils';
 import RadarChart from '../../../components/RadarChart';
 import FileInput from '../../../components/FileInput';
+import { useNotifications } from '../../../hooks/useNotifications';
+import { useApp } from '../../../contexts/AppContext';
+import type { Match, Team } from '../../../types/types';
 
 export default function Team() {
   const { id } = useParams();
-  const user = getUser();
-  const [team, setTeam] = useState([]);
+  const ctx = useApp();
+  const user = ctx.user;
+  const [team, setTeam] = useState<Team>();
   const [gamers, setGamers] = useState([]);
-  const [matches, setMatches] = useState([]);
+  const [matches, setMatches] = useState<
+    {
+      link: number;
+      championship: string | undefined;
+      championshipId: number | undefined;
+      team1: string | undefined;
+      team2: string | undefined;
+      winner: string;
+      status: string;
+    }[]
+  >([]);
   const [filter, setFilter] = useState('');
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -28,9 +38,15 @@ export default function Team() {
   const [logo, setLogo] = useState<File | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [teamMetrics, setTeamMetrics] = useState<Record<string, number>>({});
+  const [logoLoading, setLogoLoading] = useState(true);
+  const [logoError, setLogoError] = useState(false);
+  const { createNotifications } = useNotifications({ setLoading });
 
   const haveTeamIsgamer =
-    user?.profile === 'gamer' && user.gamers[0]?.team === null;
+    user?.profile === 'gamer' && user?.gamers?.[0]?.team === null;
+
+  const canLeaveTeam =
+    user?.profile === 'gamer' && user?.gamers?.[0]?.team?.id === team?.id;
 
   function verifyHability(score: number) {
     if (score <= 9999) return 'Iniciante';
@@ -49,6 +65,8 @@ export default function Team() {
     async function getTeam() {
       if (!id) return;
       setLoading(true);
+      setLogoLoading(true);
+      setLogoError(false);
       try {
         const { data } = await api.get(`team?id=${id}`);
         setTeam(data.teams[0]);
@@ -61,7 +79,11 @@ export default function Team() {
           };
         });
 
-        setGamers(gamersData.sort((a, b) => (a.score > b.score ? -1 : 1)));
+        setGamers(
+          gamersData.sort((a: { score: number }, b: { score: number }) =>
+            a.score > b.score ? -1 : 1
+          )
+        );
 
         // Soma todas as métricas de todos os jogadores do time
         const metricsSum: Record<string, number> = {};
@@ -89,7 +111,7 @@ export default function Team() {
         }
 
         setTeamMetrics(metricsSum);
-      } catch (error) {
+      } catch (error: any) {
         toast.error(error.response.data.error);
       } finally {
         setLoading(false);
@@ -100,7 +122,9 @@ export default function Team() {
       if (!id) return;
       setLoading(true);
       try {
-        const { data } = await api.get(`/match?page=${page}&idTeam=${id}`);
+        const { data } = await api.get<Match[]>(
+          `/match?page=${page}&idTeam=${id}`
+        );
         let frontData;
         if (
           filter === 'finished' ||
@@ -111,10 +135,10 @@ export default function Team() {
             ?.filter(d => d.status === filter)
             .map(d => ({
               link: d.id,
-              championship: d.championship.name,
-              championshipId: d.championship.id,
-              team1: d.team1.name,
-              team2: d.team2.name,
+              championship: d?.championship?.name,
+              championshipId: d?.championship?.id,
+              team1: d?.team1?.name,
+              team2: d?.team2?.name,
               winner: d?.winner?.name ?? 'Indefinido',
               status: statusFront[d.status as keyof typeof statusFront],
             }));
@@ -123,10 +147,10 @@ export default function Team() {
             ?.filter(d => d.status !== 'finished')
             .map(d => ({
               link: d.id,
-              championship: d.championship.name,
-              championshipId: d.championship.id,
-              team1: d.team1.name,
-              team2: d.team2.name,
+              championship: d?.championship?.name,
+              championshipId: d?.championship?.id,
+              team1: d?.team1?.name,
+              team2: d?.team2?.name,
               winner: d?.winner?.name ?? 'Indefinido',
               status: statusFront[d.status as keyof typeof statusFront],
             }));
@@ -153,20 +177,20 @@ export default function Team() {
     try {
       if (!logo) {
         await api.put('/team', {
-          id: team.id,
+          id: team?.id,
           name,
         });
         toast.success('Time editado com sucesso');
         return;
       }
       const fd = new FormData();
-      fd.append('id', team.id);
+      fd.append('id', String(team?.id ?? ''));
       fd.append('logo', logo);
       fd.append('name', name);
       await api.put('/team', fd);
       toast.success('Time editado com sucesso');
       return;
-    } catch (error) {
+    } catch (error: any) {
       toast.error(error?.response?.data?.error || 'Erro ao editar time');
     } finally {
       setLoading(false);
@@ -175,8 +199,20 @@ export default function Team() {
   }
 
   async function handleNotification() {
+    if (!team?.gamer?.user?.id || !user?.gamers?.[0]?.id || !team?.id) return;
     await createNotifications(
       'team_accept',
+      team.gamer.user.id,
+      user.gamers[0].id,
+      ``,
+      team.id
+    );
+  }
+
+  async function handleLeaveTeam() {
+    if (!team?.gamer?.user?.id || !user?.gamers?.[0]?.id || !team?.id) return;
+    await createNotifications(
+      'team_leave',
       team.gamer.user.id,
       user.gamers[0].id,
       ``,
@@ -250,6 +286,18 @@ export default function Team() {
           </button>
         </Right>
       )}
+      {canLeaveTeam && (
+        <Right>
+          <button
+            onClick={e => {
+              e.preventDefault();
+              handleLeaveTeam();
+            }}
+          >
+            Solicitar para sair do time
+          </button>
+        </Right>
+      )}
       {user?.gamers?.[0].id === team?.gamer?.id && (
         <Left>
           {isEditing ? (
@@ -293,13 +341,21 @@ export default function Team() {
         </Left>
       )}
       {loading && <Loading fullscreen message='Carregando dados...' />}
-      {team.id ? (
+      {team?.id ? (
         <>
-          <Logo
-            src={`http://localhost:3333/team/${team.id}/logo`}
-            alt={`${team.name} logo`}
-            onError={e => (e.currentTarget.style.display = 'none')}
-          />
+          {logoLoading && <Loading message='Carregando logo...' />}
+          {!logoError && (
+            <Logo
+              src={`http://localhost:3333/team/${team.id}/logo`}
+              alt={`${team.name} logo`}
+              onLoad={() => setLogoLoading(false)}
+              onError={() => {
+                setLogoLoading(false);
+                setLogoError(true);
+              }}
+              style={{ display: logoLoading ? 'none' : 'block' }}
+            />
+          )}
           {isEditing ? (
             <>
               <FileInput
@@ -340,7 +396,7 @@ export default function Team() {
             }}
           />
           <Card style={{ display: 'flex', justifyContent: 'center' }}>
-            <h3>Responsavel do time: {team.gamer.user.name}</h3>
+            <h3>Responsavel do time: {team?.gamer?.user?.name}</h3>
           </Card>
         </>
       ) : (

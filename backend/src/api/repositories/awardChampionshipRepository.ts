@@ -1,6 +1,5 @@
 import { AppDataSource } from '../../data-source.ts';
 import { AwardsChampionship } from '../entities/AwardsChampionship.ts';
-import { createLog } from '../../utils.ts';
 
 const awardsChampionshipRepository =
   AppDataSource.getRepository(AwardsChampionship);
@@ -50,11 +49,6 @@ export async function deleteAwardChampionship(
   ids: number[],
   user: { id: number; role: string }
 ) {
-  if (!ids || ids.length === 0)
-    throw new Error('IDs são obrigatórios para a requisição');
-  if (user.role !== 'admin')
-    throw new Error('Este usuário não pode realizar esta ação');
-
   for (const id of ids) {
     const result = await awardsChampionshipRepository
       .createQueryBuilder('ac')
@@ -76,11 +70,5 @@ export async function deleteAwardChampionship(
       .where('id = :id', { id })
       .execute();
   }
-
-  await createLog(
-    user.id,
-    'DELETE_AWARD_CHAMPIONSHIP',
-    `${ids.length} prêmio(s) removido(s) do campeonato`
-  );
   return 'Deletado com sucesso!';
 }

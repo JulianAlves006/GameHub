@@ -1,10 +1,12 @@
 import type { Response } from 'express';
-import * as awardService from '../services/awardService.ts';
+import * as awardHandler from '../handlers/awardHandler.ts';
 
 export class AwardController {
   getAwards = async (req: any, res: Response) => {
     try {
-      const response = await awardService.getAwards(req.query.id || null);
+      const response = await awardHandler.getAwardsHandler(
+        req.query.id || null
+      );
       res.status(200).json(response);
     } catch (error: any) {
       return res.status(500).json({ error: error.message });
@@ -13,7 +15,10 @@ export class AwardController {
 
   createAward = async (req: any, res: Response) => {
     try {
-      const response = await awardService.createAward(req.body, req.user);
+      const response = await awardHandler.createAwardHandler(
+        req.body,
+        req.user
+      );
       res.status(200).json(response);
     } catch (error: any) {
       return res.status(500).json({ error: error.message });
@@ -22,7 +27,10 @@ export class AwardController {
 
   updateAward = async (req: any, res: Response) => {
     try {
-      const response = await awardService.updateAward(req.body, req.user);
+      const response = await awardHandler.updateAwardHandler(
+        req.body,
+        req.user
+      );
       res.status(200).json(response);
     } catch (error: any) {
       return res.status(500).json({ error: error.message });
@@ -31,7 +39,10 @@ export class AwardController {
 
   deleteAward = async (req: any, res: Response) => {
     try {
-      const response = await awardService.deleteAward(req.body.id, req.user);
+      const response = await awardHandler.deleteAwardHandler(
+        req.body.id,
+        req.user
+      );
       res.status(200).json(response);
     } catch (error: any) {
       if (error.code === 'ER_ROW_IS_REFERENCED_2') {

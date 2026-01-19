@@ -4,12 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import api from '../../../services/axios';
 import Loading from '../../../components/loading';
-import { getUser } from '../../../services/utils';
+import { useApp } from '../../../contexts/AppContext';
 
 export default function Gamer() {
+  const ctx = useApp();
   const navigate = useNavigate();
-  const user = getUser();
-  const [shirtNumber, setShirtNumber] = useState<number | ''>('');
+  const user = ctx.user;
+  const [shirtNumber, setShirtNumber] = useState<number | string>('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -31,7 +32,7 @@ export default function Gamer() {
     try {
       await api.post('gamer', {
         shirtNumber: Number(shirtNumber),
-        user: user.id,
+        user: user?.id,
       });
       toast.success('Gamer criado com sucesso!');
       navigate('/');

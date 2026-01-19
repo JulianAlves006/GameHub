@@ -1,10 +1,10 @@
 import type { Response } from 'express';
-import * as championshipService from '../services/championshipService.ts';
+import * as championshipHandler from '../handlers/championshipHandler.ts';
 
 class ChampionshipController {
   getChampionship = async (req: any, res: Response) => {
     try {
-      const response = await championshipService.getChampionship(
+      const response = await championshipHandler.getChampionshipHandler(
         req.query.idChampionship || undefined,
         req.query.idAdmin || undefined
       );
@@ -16,7 +16,7 @@ class ChampionshipController {
 
   createChampionship = async (req: any, res: Response) => {
     try {
-      const response = await championshipService.createChampionchip(
+      const response = await championshipHandler.createChampionshipHandler(
         req.body,
         req.body.awards || [],
         req.user
@@ -34,7 +34,7 @@ class ChampionshipController {
         award: awardId,
       }));
 
-      const response = await championshipService.editChampionship(
+      const response = await championshipHandler.editChampionshipHandler(
         req.body,
         awards,
         req.user
@@ -47,7 +47,7 @@ class ChampionshipController {
 
   deleteChampionship = async (req: any, res: Response) => {
     try {
-      const response = await championshipService.deleteChampionship(
+      const response = await championshipHandler.deleteChampionshipHandler(
         req.body.id,
         req.user
       );

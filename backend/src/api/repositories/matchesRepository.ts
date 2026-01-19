@@ -1,9 +1,5 @@
 import { AppDataSource } from '../../data-source.ts';
-import { Match } from '../entities/Match.ts';
-import { Team } from '../entities/Team.ts';
-import { Championship } from '../entities/Championship.ts';
-import { Metric } from '../entities/Metric.ts';
-import { createLog } from '../../utils.ts';
+import { Championship, Match, Metric, Team } from '../entities/index.ts';
 
 const matchRepository = AppDataSource.getRepository(Match);
 
@@ -119,11 +115,6 @@ export async function createMatch(
   user: { id: number; role: string }
 ) {
   const { team1, team2, winner, championship, status, scoreboard } = body;
-  if (user.role !== 'admin') throw new Error('Usuário sem permissão');
-  if (!team1 || !team2 || !championship || !status)
-    throw new Error('Algumas informações obrigatórias estão faltando!');
-
-  // Extrair IDs se forem objetos
   const team1Id =
     typeof team1 === 'object' && team1 !== null && 'id' in team1
       ? team1.id
@@ -138,7 +129,6 @@ export async function createMatch(
     'id' in championship
       ? championship.id
       : championship;
-
   const team1Exist = await AppDataSource.getRepository(Team).findOneBy({
     id: team1Id,
   });
@@ -178,14 +168,13 @@ export async function createMatch(
   const matchId = Array.isArray(savedMatch)
     ? (savedMatch[0] as Match)?.id
     : (savedMatch as Match)?.id;
-  if (matchId) {
-    await createLog(
-      user.id,
-      'CREATE_MATCH',
-      `Partida criada: Time ${team1Id} vs Time ${team2Id} (ID: ${matchId})`
-    );
-  }
-  return savedMatch as Match | Match[];
+
+  return {
+    savedMatch: savedMatch as Match | Match[],
+    matchId,
+    team1Id,
+    team2Id,
+  };
 }
 
 export async function updateMatch(
@@ -193,9 +182,6 @@ export async function updateMatch(
   user: { id: number; role: string }
 ) {
   const { id, winner, status, scoreboard } = body;
-  if (user.role !== 'admin') throw new Error('Usuário sem permissão');
-  if (!id) throw new Error('Id não informado!');
-
   const match = await matchRepository.findOne({
     where: { id: id },
     relations: {
@@ -246,11 +232,7 @@ export async function updateMatch(
       .where('id = :id', { id })
       .execute();
   }
-  await createLog(
-    user.id,
-    'UPDATE_MATCH',
-    `Partida editada (ID: ${id}) -${status ? `Status: ${status}` : ''} ${scoreboard ? `, Scoreboard: ${scoreboard}` : ''} ${winner ? `, Vencedor: ${winner}` : ''}`
-  );
+
   return 'Partida editada com sucesso!';
 }
 
@@ -298,6 +280,6 @@ export async function deleteMatch(
     .from(Match)
     .where('id = :id', { id })
     .execute();
-  await createLog(user.id, 'DELETE_MATCH', `Partida deletada (ID: ${id})`);
+
   return `Partida deletada com sucesso`;
 }

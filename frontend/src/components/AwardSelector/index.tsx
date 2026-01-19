@@ -10,19 +10,20 @@ import {
   RemoveButton,
   EmptyState,
 } from './styled';
+import type { Award } from '../../types/types';
 
-interface Award {
+interface SelectedAward {
   id: number;
   description: string;
   uniqueIndex?: number;
-  awardsChampionships?: number | boolean;
+  awardsChampionships?: boolean;
 }
 
 interface AwardSelectorProps {
   awards: Award[];
-  selectedAwards: Award[];
-  onAwardSelect: (award: Award) => void;
-  onAwardRemove: (index: number, award: Award) => void;
+  selectedAwards: SelectedAward[];
+  onAwardSelect: (award: SelectedAward) => void;
+  onAwardRemove: (index: number, award: SelectedAward) => void;
   onNewAwardRemove: (uniqueIndex: number) => void;
   placeholder?: string;
   disabled?: boolean;
@@ -53,7 +54,8 @@ const AwardSelector: React.FC<AwardSelectorProps> = ({
     if (selectedAward) {
       const uniqueIndex = Date.now() + Math.random();
       onAwardSelect({
-        ...selectedAward,
+        id: selectedAward.id,
+        description: selectedAward.description,
         uniqueIndex,
         awardsChampionships: false,
       });

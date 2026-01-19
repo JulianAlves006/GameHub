@@ -1,24 +1,58 @@
 import { AppDataSource } from '../../data-source.ts';
-import { Gamer } from '../entities/Gamer.ts';
-import { Team } from '../entities/Team.ts';
-import { createLog } from '../../utils.ts';
+import { Gamer, Team, Metric } from '../entities/index.ts';
 
 const gamerRepository = AppDataSource.getRepository(Gamer);
 
-export async function getGamers() {
-  const gamers = await gamerRepository.find();
-  return gamers;
+export async function getGamers(
+  page: number = 1,
+  limit: number = 10,
+  id: number | null = null
+) {
+  const skip = (page - 1) * limit;
+
+  // Criar query builder com relações
+  let gamersQuery = gamerRepository
+    .createQueryBuilder('gamer')
+    .leftJoinAndSelect('gamer.user', 'user')
+    .leftJoinAndSelect('gamer.team', 'team')
+    .leftJoinAndSelect('gamer.metrics', 'metrics');
+
+  // Aplicar filtro por ID se fornecido
+  if (id) {
+    gamersQuery = gamersQuery.where('gamer.id = :id', { id });
+  }
+
+  // Buscar todos os gamers (antes da paginação para contar total)
+  const allGamers = await gamersQuery.getMany();
+
+  // Ordenar por score (maior para menor)
+  const sortedGamers = allGamers.sort(
+    (a, b) => (b.score || 0) - (a.score || 0)
+  );
+
+  // Aplicar paginação
+  const totalCount = sortedGamers.length;
+  const gamers = sortedGamers.slice(skip, skip + limit);
+
+  const totalPages = Math.ceil(totalCount / limit);
+  const hasNextPage = page < totalPages;
+  const hasPreviousPage = page > 1;
+
+  return {
+    gamers,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalCount,
+      hasNextPage,
+      hasPreviousPage,
+      limit,
+    },
+  };
 }
 
-export async function createGamer(body: Gamer) {
+export async function createGamer(body: any): Promise<Gamer> {
   const { shirtNumber, user, team } = body;
-
-  if (!shirtNumber || !user)
-    throw new Error(
-      'As informações obrigatórias devem estar preenchidas. (shirtNumber && user)'
-    );
-
-  // Extrair ID do usuário se for um objeto
   const userId =
     typeof user === 'object' && user !== null && 'id' in user ? user.id : user;
 
@@ -39,13 +73,9 @@ export async function createGamer(body: Gamer) {
       team: { id: teamId },
     };
     const newGamer = gamerRepository.create(gamer);
-    await gamerRepository.save(newGamer);
-    await createLog(
-      userId,
-      'CREATE_GAMER',
-      `Gamer criado: número ${shirtNumber} (ID: ${newGamer.id})`
-    );
-    return newGamer;
+    const savedGamer = await gamerRepository.save(newGamer);
+
+    return (Array.isArray(savedGamer) ? savedGamer[0] : savedGamer) as Gamer;
   }
 
   const gamer = {
@@ -53,20 +83,13 @@ export async function createGamer(body: Gamer) {
     user: { id: userId },
   };
   const newGamer = gamerRepository.create(gamer);
-  await gamerRepository.save(newGamer);
-  await createLog(
-    userId,
-    'CREATE_GAMER',
-    `Gamer criado: número ${shirtNumber} (ID: ${newGamer.id})`
-  );
-  return newGamer;
+  const savedGamer = await gamerRepository.save(newGamer);
+
+  return (Array.isArray(savedGamer) ? savedGamer[0] : savedGamer) as Gamer;
 }
 
-export async function updateGamer(body: Gamer) {
+export async function updateGamer(body: any) {
   const { id, shirtNumber, team, score } = body;
-
-  if (!id) throw new Error('ID precisa estar preenchido para a edição');
-
   const gamer = await gamerRepository.findOne({
     where: { id },
     relations: {
@@ -96,12 +119,17 @@ export async function updateGamer(body: Gamer) {
 
   const updateData: any = {};
 
-  if (team) {
-    const teamId =
-      typeof team === 'object' && team !== null && 'id' in team
-        ? team.id
-        : team;
-    updateData.team = { id: teamId };
+  if (team !== undefined) {
+    if (team === null) {
+      // Permite definir team como null para remover o vínculo
+      updateData.team = null;
+    } else {
+      const teamId =
+        typeof team === 'object' && team !== null && 'id' in team
+          ? team.id
+          : team;
+      updateData.team = { id: teamId };
+    }
   }
 
   if (shirtNumber !== undefined) {
@@ -133,16 +161,14 @@ export async function updateGamer(body: Gamer) {
     throw new Error('Usuário associado ao gamer não encontrado');
   }
 
-  await createLog(
-    gamer.user.id,
-    'UPDATE_GAMER',
-    `Gamer editado: número ${finalShirtNumber}${scoreInfo} (ID: ${id})`
-  );
-  return 'Gamer editado com sucesso!';
+  return {
+    text: 'Gamer editado com sucesso!',
+    gamerInfo: { id: gamer.user.id, finalShirtNumber, scoreInfo },
+  };
 }
 
-export async function deleteGamer(id: number) {
-  if (!id) throw new Error('Id está vazio!');
+export async function deleteGamer(body: any) {
+  const { id } = body;
   const gamer = await gamerRepository.findOne({
     where: { id },
     relations: {
@@ -153,13 +179,16 @@ export async function deleteGamer(id: number) {
 
   if (!gamer) throw new Error('Gamer não encontrado!');
 
-  const teamData = await AppDataSource.getRepository(Team).findOne({
-    where: { id: gamer.team.id },
-    relations: {
-      matchesAsTeam1: true,
-      matchesAsTeam2: true,
-    },
-  });
+  let teamData;
+  if (gamer.team) {
+    teamData = await AppDataSource.getRepository(Team).findOne({
+      where: { id: gamer?.team?.id },
+      relations: {
+        matchesAsTeam1: true,
+        matchesAsTeam2: true,
+      },
+    });
+  }
   if (teamData?.matchesAsTeam1.some(match => match.status === 'playing'))
     throw new Error(
       'Gamer está em uma partida, portanto por enquanto não pode ser deletado!'
@@ -170,14 +199,23 @@ export async function deleteGamer(id: number) {
     );
 
   const userId = gamer.user?.id || null;
+
+  // Deletar métricas relacionadas ao gamer antes de deletar o gamer
+  const metricRepository = AppDataSource.getRepository(Metric);
+  await metricRepository
+    .createQueryBuilder()
+    .delete()
+    .from(Metric)
+    .where('gamer_id = :gamerId', { gamerId: id })
+    .execute();
+
+  // Agora pode deletar o gamer sem violar a constraint de chave estrangeira
   await gamerRepository
     .createQueryBuilder()
     .delete()
     .from(Gamer)
     .where('id = :id', { id: id })
     .execute();
-  if (userId) {
-    await createLog(userId, 'DELETE_GAMER', `Gamer deletado (ID: ${id})`);
-  }
-  return `Gamer deletado com sucesso`;
+
+  return { text: `Gamer deletado com sucesso`, userId };
 }

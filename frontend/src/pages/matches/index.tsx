@@ -13,9 +13,11 @@ import {
   PaginationButton,
   TableContainer,
 } from './styled';
+import { useApp } from '../../contexts/AppContext';
 
 export default function Matches() {
   const navigate = useNavigate();
+  const ctx = useApp();
   const [matches, setMatches] = useState([]);
   const [filter, setFilter] = useState('');
   const [page, setPage] = useState(1);
@@ -31,7 +33,7 @@ export default function Matches() {
   };
 
   useEffect(() => {
-    if (!localStorage.getItem('token') || !localStorage.getItem('user')) {
+    if (!localStorage.getItem('token') || !ctx.user) {
       toast.error('Você precisa estar logado para poder acessar essa pagina.');
       navigate('/');
     }

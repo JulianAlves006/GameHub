@@ -1,10 +1,10 @@
 import type { Response } from 'express';
-import * as userController from '../services/userService.ts';
+import * as userHandler from '../handlers/userHandler.ts';
 
 class UserController {
   getUser = async (req: any, res: Response) => {
     try {
-      const user = await userController.getUser(req.query.id || null);
+      const user = await userHandler.getUserHandler(req.query.id || undefined);
       res.status(200).json(user);
     } catch (error: any) {
       res.status(400).json({ erro: error.message });
@@ -13,7 +13,7 @@ class UserController {
 
   createUser = async (req: any, res: Response) => {
     try {
-      const user = await userController.createUser(req.body);
+      const user = await userHandler.createUserHandler(req.body);
       res.status(200).json(user);
     } catch (error: any) {
       res.status(400).json({ erro: error.message });
@@ -22,7 +22,7 @@ class UserController {
 
   updateUser = async (req: any, res: Response) => {
     try {
-      const updatedUser = await userController.updateUser(req.body);
+      const updatedUser = await userHandler.updateUserHandler(req.body);
       res.status(200).json(updatedUser);
     } catch (error: any) {
       res.status(400).json({ erro: error.message });
@@ -31,8 +31,8 @@ class UserController {
 
   deleteUser = async (req: any, res: Response) => {
     try {
-      const id = req.body.id;
-      const response = await userController.deleteUser(id, req.user);
+      const id = req.query.id;
+      const response = await userHandler.deleteUserHandler(id, req.user);
       res.status(200).json(response);
     } catch (error: any) {
       res.status(400).json({ erro: error.message });

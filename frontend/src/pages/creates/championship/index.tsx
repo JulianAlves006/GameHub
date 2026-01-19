@@ -6,22 +6,24 @@ import { useNavigate } from 'react-router-dom';
 import { Alert } from '../../../components/Alert';
 import Loading from '../../../components/loading';
 import AwardSelector from '../../../components/AwardSelector';
-import { getUser } from '../../../services/utils';
+import type { Award } from '../../../types/types';
+import { useApp } from '../../../contexts/AppContext';
 
 export default function CreateChampionship() {
+  const ctx = useApp();
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [startDate, setStartDate] = useState('');
-  const [awards, setAwards] = useState<any[]>([]);
+  const [awards, setAwards] = useState<Award[]>([]);
   const [endDate, setEndDate] = useState('');
   const [selectedAwards, setSelectedAwards] = useState<
     { id: number; description: string; uniqueIndex?: number }[]
   >([]);
-  const user = getUser();
+  const user = ctx.user;
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (user.profile !== 'admin') {
+    if (user?.profile !== 'admin') {
       toast.error(
         'Somente usuários administradores podem adicionar novos campeonatos'
       );
@@ -30,7 +32,7 @@ export default function CreateChampionship() {
     async function getAwards() {
       setLoading(true);
       try {
-        const { data } = await api.get(`/award?id=${user.id}`);
+        const { data } = await api.get(`/award?id=${user?.id}`);
         setAwards(data);
       } catch (error: any) {
         toast.error(error.response.data.error);

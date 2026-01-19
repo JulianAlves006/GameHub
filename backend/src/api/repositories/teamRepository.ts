@@ -1,10 +1,7 @@
 import { AppDataSource } from '../../data-source.ts';
-import { Gamer } from '../entities/Gamer.ts';
-import { Team } from '../entities/Team.ts';
-import { User } from '../entities/User.ts';
-import { uploadBuffer, deleteObject, getPresignedUrl } from '../../s3.ts';
+import { deleteObject, getPresignedUrl, uploadBuffer } from '../../s3.ts';
+import { Gamer, Team, User } from '../entities/index.ts';
 import { v4 as uuid } from 'uuid';
-import { createLog } from '../../utils.ts';
 
 const teamRepository = AppDataSource.getRepository(Team);
 const PREFIX = process.env.S3_PUBLIC_PREFIX || 'uploads/teams/';
@@ -152,11 +149,7 @@ export async function createTeam(
     .set(newGamer)
     .where('id = :id', { id: gamer.id })
     .execute();
-  await createLog(
-    user,
-    'CREATE_TEAM',
-    `Time criado: ${name} (ID: ${newTeam.id})`
-  );
+
   return newTeam;
 }
 
@@ -167,7 +160,6 @@ export async function updateTeam(
   user: { id: number; role: string }
 ) {
   const { id, name } = body;
-  if (!id || !name) throw new Error('Informações obrigatórias faltando!');
 
   const team = await teamRepository.findOne({
     where: { id },
@@ -233,10 +225,6 @@ export async function updateTeam(
     .set(newTeam)
     .where('id = :id', { id: id })
     .execute();
-  await createLog(
-    user.id,
-    'UPDATE_TEAM',
-    `Time editado: ${name} (ID: ${id})${logo ? ' - Logo atualizado' : ''}`
-  );
-  return 'Time atualizado com sucesso!';
+
+  return { text: 'Time atualizado com sucesso!', id, name };
 }

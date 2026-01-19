@@ -16,6 +16,7 @@ import Gamer from '../pages/creates/gamer';
 import NotFound from '../pages/404';
 import EditChampionship from '../pages/edits/championship';
 import Awards from '../pages/creates/award';
+import Gamers from '../pages/gamers';
 
 export default function AppRoutes() {
   return (
@@ -23,6 +24,7 @@ export default function AppRoutes() {
       <Route path='/' element={<Login />} />
       <Route path='/register' element={<Register />} />
       <Route path='/gamer' element={<Gamer />} />
+      <Route path='/gamers' element={<Gamers />} />
       <Route path='/home' element={<Home />} />
       <Route path='/matches' element={<Matches />} />
       <Route path='/match/:id' element={<Match />} />
@@ -35,6 +37,7 @@ export default function AppRoutes() {
       <Route path='/team/:id' element={<Team />} />
       <Route path='/team' element={<TeamRegister />} />
       <Route path='/user' element={<User />} />
+      <Route path='/user/:id' element={<User />} />
       <Route path='*' element={<NotFound />} />
     </Routes>
   );

@@ -1,10 +1,12 @@
 import type { Response } from 'express';
-import * as NotificationService from '../services/notificationsService.ts';
+import * as NotificationHandler from '../handlers/notificationHandler.ts';
 
 class NotificationsController {
   getNotifications = async (req: any, res: Response) => {
     try {
-      const response = await NotificationService.getNotifications(req.user.id);
+      const response = await NotificationHandler.getNotificationHandler(
+        req.user.id
+      );
       res.status(200).json(response);
     } catch (error: any) {
       return res.status(500).json({ error: error.message });
@@ -18,7 +20,7 @@ class NotificationsController {
       const gamer_id = req.body.gamer_id;
       const description = req.body.description;
       const teamID = req.body.teamID ?? req.body.team ?? null;
-      const response = await NotificationService.createNotifications(
+      const response = await NotificationHandler.createNotificationHandler(
         type,
         user_id,
         gamer_id,
@@ -33,7 +35,7 @@ class NotificationsController {
 
   editNotifications = async (req: any, res: Response) => {
     try {
-      const response = await NotificationService.editNotifications(
+      const response = await NotificationHandler.editNotificationHandler(
         req.body,
         req.user
       );

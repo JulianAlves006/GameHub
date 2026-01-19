@@ -29,16 +29,27 @@ import {
   AddMatchButton,
 } from './styled';
 import Loading from '../../../components/loading';
-import { getUser } from '../../../services/utils';
+import { useApp } from '../../../contexts/AppContext';
+import {
+  type Team,
+  type Match,
+  type Championship,
+  type Award,
+} from '../../../types/types';
+
+type AwardResponse = {
+  award: Award;
+};
 
 export default function Championship() {
+  const ctx = useApp();
   const navigate = useNavigate();
   const { id } = useParams();
-  const [championship, setChampionship] = useState();
-  const [matches, setMatches] = useState([]);
-  const [teams, setTeams] = useState([]);
-  const [awards, setAwards] = useState([]);
-  const user = getUser();
+  const [championship, setChampionship] = useState<Championship[]>();
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [awards, setAwards] = useState<AwardResponse[]>([]);
+  const user = ctx.user;
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -64,8 +75,9 @@ export default function Championship() {
         const { data } = await api.get(
           `/awardChampionship?idChampionship=${id}`
         );
+        console.log('a.awards:', data);
         setAwards(data);
-      } catch (error) {
+      } catch (error: any) {
         toast.error(error.response.data.error);
       } finally {
         setLoading(false);
@@ -76,7 +88,7 @@ export default function Championship() {
     getAwards();
   }, []);
 
-  function addUniqueTeamsFromMatches(matches: any[]) {
+  function addUniqueTeamsFromMatches(matches: Match[]) {
     setTeams(prev => {
       const seen = new Set(prev.map(t => t.id));
       const next = [...prev];
@@ -94,7 +106,7 @@ export default function Championship() {
   }
   return (
     <Container>
-      {user.profile === 'admin' && (
+      {user?.profile === 'admin' && (
         <Left>
           <Link
             style={{ marginTop: '10px' }}
@@ -110,7 +122,7 @@ export default function Championship() {
         <MatchesSection>
           <MatchesHeader>
             <h1>Partidas</h1>
-            {user.profile === 'admin' && (
+            {user?.profile === 'admin' && (
               <AddMatchButton to={`/createMatch/${championship?.[0].id}`}>
                 Adicionar partidas
               </AddMatchButton>
@@ -134,7 +146,7 @@ export default function Championship() {
                           }
                           onClick={e => {
                             e.stopPropagation();
-                            navigate(`/team/${m.team1.id}`);
+                            navigate(`/team/${m?.team1?.id}`);
                           }}
                         />
                         <MatchTeamName>{m.team1.name}</MatchTeamName>
@@ -153,7 +165,7 @@ export default function Championship() {
                           }
                           onClick={e => {
                             e.stopPropagation();
-                            navigate(`/team/${m.team2.id}`);
+                            navigate(`/team/${m?.team2?.id}`);
                           }}
                         />
                         <MatchTeamName>{m.team2.name}</MatchTeamName>
@@ -209,7 +221,7 @@ export default function Championship() {
       </Awards>
       <Admin>
         <Center>
-          <h2>Criador: {championship?.[0].admin.name}</h2>
+          <h2>Criador: {championship?.[0]?.admin?.name}</h2>
         </Center>
       </Admin>
     </Container>

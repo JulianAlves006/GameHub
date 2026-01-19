@@ -6,6 +6,7 @@ import GlobalStyle from './style/index.ts';
 import Header from './components/header';
 import { BrowserRouter, useLocation } from 'react-router-dom';
 
+import { AppProvider } from './contexts/AppContext.tsx';
 import AppRoutes from './routes/index.tsx';
 
 function Layout() {
@@ -16,7 +17,7 @@ function Layout() {
     location.pathname === '/gamer';
 
   return (
-    <>
+    <AppProvider>
       <GlobalStyle />
       {!hideHeader && <Header />}
       <AppRoutes />
@@ -32,7 +33,7 @@ function Layout() {
         pauseOnHover
         theme='light'
       />
-    </>
+    </AppProvider>
   );
 }
 

@@ -5,17 +5,20 @@ import api from '../../../services/axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import Loading from '../../../components/loading';
 import AwardSelector from '../../../components/AwardSelector';
-import { getUser } from '../../../services/utils';
+import type { Award, AwardChampionship } from '../../../types/types';
+import { useApp } from '../../../contexts/AppContext';
 
 export default function EditChampionship() {
   const navigate = useNavigate();
+  const ctx = useApp();
   const [name, setName] = useState('');
-  const [awards, setAwards] = useState<any[]>([]);
+  const [awards, setAwards] = useState<Award[]>([]);
   const [awardsOfChampionship, setAwardsOfChampionship] = useState<
     {
       id: number;
       description: string;
-      awardsChampionships: any;
+      awardsChampionships?: boolean;
+      awardsChampionshipsId?: number;
       uniqueIndex: number;
     }[]
   >([]);
@@ -23,12 +26,12 @@ export default function EditChampionship() {
     { id: number; description: string; uniqueIndex: number }[]
   >([]);
   const [awardsToDelete, setAwardsToDelete] = useState<number[]>([]);
-  const user = getUser();
+  const user = ctx.user;
   const [loading, setLoading] = useState(false);
   const { id } = useParams();
 
   useEffect(() => {
-    if (user.profile !== 'admin') {
+    if (user?.profile !== 'admin') {
       toast.error('Somente usuários administradores podem editar campeonatos');
       navigate('/championships');
     }
@@ -39,10 +42,11 @@ export default function EditChampionship() {
         const { data } = await api.get(`/championship?idChampionship=${id}`);
         setName(data[0].name);
         const awardsChampionships = data[0].awardsChampionships;
-        const awards = awardsChampionships.map((aC: any) => ({
-          id: aC.award.id,
-          description: aC.award.description,
-          awardsChampionships: aC.id,
+        const awards = awardsChampionships.map((aC: AwardChampionship) => ({
+          id: aC?.award?.id,
+          description: aC?.award?.description,
+          awardsChampionships: true,
+          awardsChampionshipsId: aC.id,
           uniqueIndex: Date.now() + Math.random(), // Índice único para prêmios existentes
         }));
         setAwardsOfChampionship(awards);
@@ -56,7 +60,7 @@ export default function EditChampionship() {
     async function getAwards() {
       setLoading(true);
       try {
-        const { data } = await api.get(`/award?id=${user.id}`);
+        const { data } = await api.get(`/award?id=${user?.id}`);
         setAwards(data);
       } catch (error: any) {
         toast.error(error.response.data.error);
@@ -72,18 +76,26 @@ export default function EditChampionship() {
   const handleAwardSelect = (award: {
     id: number;
     description: string;
-    uniqueIndex: number;
-    awardsChampionships: any;
+    uniqueIndex?: number;
+    awardsChampionships?: boolean;
   }) => {
     setSelectedAwards(prev => [
       ...prev,
       {
         id: award.id,
         description: award.description,
-        uniqueIndex: award.uniqueIndex,
+        uniqueIndex: award.uniqueIndex ?? Date.now() + Math.random(),
       },
     ]);
-    setAwardsOfChampionship(prev => [...prev, award]);
+    setAwardsOfChampionship(prev => [
+      ...prev,
+      {
+        id: award.id,
+        description: award.description,
+        uniqueIndex: award.uniqueIndex ?? Date.now() + Math.random(),
+        awardsChampionships: award.awardsChampionships,
+      },
+    ]);
   };
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -118,14 +130,16 @@ export default function EditChampionship() {
 
   async function handleDelete(
     index: number,
-    award: { id: number; description: string; awardsChampionships: number }
+    award: { id: number; description: string; awardsChampionshipsId?: number }
   ) {
     // Remove do awardsOfChampionship pelo índice
     setAwardsOfChampionship(prev => prev.filter((_, i) => i !== index));
 
     // Remove do selectedAwards também pelo índice
     setSelectedAwards(prev => prev.filter((_, i) => i !== index));
-    setAwardsToDelete(prev => [...prev, award.awardsChampionships]);
+    if (award.awardsChampionshipsId) {
+      setAwardsToDelete(prev => [...prev, award.awardsChampionshipsId!]);
+    }
   }
 
   function handleRemoveNewAward(uniqueIndex: number) {

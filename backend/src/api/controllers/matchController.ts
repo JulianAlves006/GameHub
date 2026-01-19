@@ -1,5 +1,5 @@
 import type { Response } from 'express';
-import * as matchService from '../services/matchesService.ts';
+import * as matchHandler from '../handlers/matchesHandler.ts';
 
 class MatchController {
   getMatches = async (req: any, res: Response) => {
@@ -19,12 +19,12 @@ class MatchController {
           .status(400)
           .json({ erro: 'Limite deve estar entre 1 e 100' });
       }
-      const response = await matchService.getMatches(
+      const response = await matchHandler.getMatchesHandler(
         page,
         limit,
-        idChampionship,
-        idMatch,
-        idTeam
+        idChampionship as number,
+        idMatch as number,
+        idTeam as number
       );
       res.status(200).json(response);
     } catch (error: any) {
@@ -34,7 +34,10 @@ class MatchController {
 
   createMatch = async (req: any, res: Response) => {
     try {
-      const response = await matchService.createMatch(req.body, req.user);
+      const response = await matchHandler.createMatchHandler(
+        req.body,
+        req.user
+      );
       res.status(200).json(response);
     } catch (error: any) {
       return res.status(500).json({ error: error.message });
@@ -43,7 +46,10 @@ class MatchController {
 
   updateMatch = async (req: any, res: Response) => {
     try {
-      const response = await matchService.updateMatch(req.body, req.user);
+      const response = await matchHandler.updateMatchHandler(
+        req.body,
+        req.user
+      );
       res.status(200).json(response);
     } catch (error: any) {
       return res.status(500).json({ error: error.message });
@@ -52,7 +58,10 @@ class MatchController {
 
   deleteMatch = async (req: any, res: Response) => {
     try {
-      const response = await matchService.deleteMatch(req.query.id, req.user);
+      const response = await matchHandler.deleteMatchHandler(
+        req.query.id,
+        req.user
+      );
       res.status(200).json(response);
     } catch (error: any) {
       return res.status(500).json({ error: error.message });

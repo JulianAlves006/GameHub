@@ -1,8 +1,5 @@
 import { AppDataSource } from '../../data-source.ts';
-import { Gamer } from '../entities/Gamer.ts';
-import { Match } from '../entities/Match.ts';
-import { Metric } from '../entities/Metric.ts';
-import { createLog } from '../../utils.ts';
+import { Gamer, Match, Metric } from '../entities/index.ts';
 
 const metricRepository = AppDataSource.getRepository(Metric);
 
@@ -24,14 +21,6 @@ export async function createMetric(
   user: { id: number; role: string }
 ) {
   const { quantity, type, description, match, gamer } = body;
-  if (!quantity || !type || !description || !match || !gamer)
-    throw new Error('Todas as informações devem estar preenchidas!');
-  if (user.role !== 'admin')
-    throw new Error(
-      'Somente usuários administradores podem registrar metricas!'
-    );
-
-  // Ensure 'match' is an id (number) before querying
   const matchId =
     typeof match === 'object' && match !== null && 'id' in match
       ? match.id
@@ -51,7 +40,7 @@ export async function createMetric(
       ? gamer.id
       : gamer;
   const gamerData = await AppDataSource.getRepository(Gamer).findOne({
-    where: { id: gamerId },
+    where: { id: gamerId as number },
   });
   if (!gamerData) {
     throw new Error('Gamer informado não encontrado!');
@@ -65,10 +54,6 @@ export async function createMetric(
   };
   const newMetric = metricRepository.create(metric);
   await metricRepository.save(newMetric);
-  await createLog(
-    user.id,
-    'CREATE_METRIC',
-    `Métrica criada: ${type} (quantidade: ${quantity}) para gamer ${gamerId} (ID: ${newMetric.id})`
-  );
-  return newMetric;
+
+  return { newMetric, type, quantity, gamerId };
 }

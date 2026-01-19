@@ -3,53 +3,46 @@ import { Table } from '../../components/Table';
 import { Container, Title } from '../../style';
 import api from '../../services/axios';
 import { toast } from 'react-toastify';
-import { formatDateFullText, getUser } from '../../services/utils';
+import { formatDateFullText } from '../../services/utils';
 import { useNavigate } from 'react-router-dom';
 import Loading from '../../components/loading';
 import { PageHeader, FilterSelect, AddButton, TableContainer } from './styled';
+import { useApp } from '../../contexts/AppContext';
+import type { Championship } from '../../types/types';
 
 export default function Championships() {
+  const ctx = useApp();
   const navigate = useNavigate();
-  const [championships, setChampionships] = useState([]);
+  const [championships, setChampionships] = useState<Championship[]>([]);
   const [filter, setFilter] = useState('');
   const today = new Date().toISOString().split('T')[0];
-  const user = getUser();
+  const user = ctx.user;
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     async function getChampionships() {
       setLoading(true);
       try {
-        const { data } = await api.get('championship');
-        let filtered;
+        const { data } = await api.get<Championship[]>('championship');
+        let filtered: Championship[] = [];
         if (filter === '') {
           filtered = data.filter(d => d.endDate >= today);
-
-          setChampionships(filtered);
-        }
-        if (filter === 'happening') {
+        } else if (filter === 'happening') {
           filtered = data.filter(
             d => d.endDate >= today && d.startDate <= today
           );
-
-          setChampionships(filtered);
-        }
-        if (filter === 'pending') {
+        } else if (filter === 'pending') {
           filtered = data.filter(d => d.startDate > today);
-
-          setChampionships(filtered);
-        }
-        if (filter === 'finished') {
+        } else if (filter === 'finished') {
           filtered = data.filter(d => d.endDate < today);
-
-          setChampionships(filtered);
         }
-        filtered.map(f => {
+        filtered.forEach(f => {
           Object.assign(f, {
             endDateText: formatDateFullText(f.endDate),
             startDateText: formatDateFullText(f.startDate),
           });
         });
+        setChampionships(filtered);
       } catch (error: any) {
         toast.error(error.response.data.error);
       } finally {
@@ -84,7 +77,7 @@ export default function Championships() {
 
       <Title>Campeonatos</Title>
       <PageHeader>
-        {user.profile === 'admin' && (
+        {user?.profile === 'admin' && (
           <AddButton onClick={() => navigate('/createChampionship')}>
             Adicionar Campeonato
           </AddButton>

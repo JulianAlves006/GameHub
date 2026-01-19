@@ -16,52 +16,6 @@ export function formatDateBrazil(dateStr: string) {
   return `${day}/${month}/${year}`;
 }
 
-export async function createNotifications(
-  type: string,
-  user_id: number,
-  gamer_id: number,
-  description: string,
-  teamID: number
-) {
-  if (!type || !user_id || !gamer_id) {
-    toast.error('Todas as informações devem ser preenchidas!');
-    return;
-  }
-  try {
-    await api.post('/notifications', {
-      type,
-      user_id,
-      gamer_id,
-      description,
-      teamID,
-    });
-    toast.success('Notificação enviada com sucesso!');
-  } catch (error: any) {
-    toast.error(
-      error?.response?.data?.error || 'Falha ao marcar notificações como lidas'
-    );
-  }
-}
-
-export async function markNotificationsAsRead(ids: number[]) {
-  if (!ids.length) return;
-  try {
-    await api.put('/notifications', {
-      ids,
-      read: true,
-    });
-  } catch (error: any) {
-    toast.error(
-      error?.response?.data?.error || 'Falha ao marcar notificações como lidas'
-    );
-  }
-}
-
-export function getUser() {
-  const userData = localStorage.getItem('user');
-  return userData ? JSON.parse(userData) : null;
-}
-
 // Mapeamento de tipos de métricas para labels formatados
 export const metricTypeMap: Record<string, string> = {
   gol: 'Gol',

@@ -1,9 +1,10 @@
 import { AppDataSource } from '../../data-source.ts';
-import { Championship } from '../entities/Championship.ts';
-import { Award } from '../entities/Award.ts';
-import { AwardsChampionship } from '../entities/AwardsChampionship.ts';
-import { Match } from '../entities/Match.ts';
-import { createLog } from '../../utils.ts';
+import {
+  Award,
+  AwardsChampionship,
+  Championship,
+  Match,
+} from '../entities/index.ts';
 
 const awardsRepository = AppDataSource.getRepository(Award);
 
@@ -13,7 +14,7 @@ export async function getChampionship(idChampionship: number, idAdmin: number) {
     const championship = await championshipRepository.find({
       relations: {
         admin: true,
-        matches: { team1: true, team2: true, winner: true },
+        matches: { team1: true, team2: true, championship: true },
         awardsChampionships: { award: true },
       },
       where: {
@@ -72,12 +73,6 @@ export async function createChampionchip(
   user: { id: number; role: string }
 ) {
   const { name, startDate, endDate } = championshipData;
-  if (user.role !== 'admin')
-    throw new Error('Somente usuários administradores podem criar campeonatos');
-  if (!name || !startDate || !endDate)
-    throw new Error('Todos os dados devem ser preenchidos!');
-
-  //Verificações e validações do campeonato
   const championshipRepository = AppDataSource.getRepository(Championship);
   const existChampionship = await championshipRepository.findBy({ name: name });
   if (existChampionship.length > 0)
@@ -93,9 +88,12 @@ export async function createChampionchip(
 
   //Verificações e validações dos premios
   for (const award of awards) {
-    const result = await awardsRepository.findBy({ id: award });
+    if (!award || !award.id) {
+      throw new Error('Prêmio inválido!');
+    }
+    const result = await awardsRepository.findBy({ id: award.id });
     if (result.length === 0)
-      throw new Error(`Prêmio com ID ${award} não encontrado!`);
+      throw new Error(`Prêmio com ID ${award.id} não encontrado!`);
   }
 
   const newChampionship = championshipRepository.create(championship);
@@ -106,20 +104,19 @@ export async function createChampionchip(
     AppDataSource.getRepository(AwardsChampionship);
 
   for (let i = 0; i < awards.length; i++) {
+    const award = awards[i];
+    if (!award || !award.id) {
+      throw new Error(`Prêmio inválido no índice ${i}`);
+    }
     const awardChampionship = {
-      award: awards[i],
-      championship: response.id,
+      award: { id: award.id },
+      championship: { id: response.id },
     };
     const newAwardChampionship =
       awardsChampionshipRepository.create(awardChampionship);
     await awardsChampionshipRepository.save(newAwardChampionship);
   }
 
-  await createLog(
-    user.id,
-    'CREATE_CHAMPIONSHIP',
-    `Campeonato criado: ${name} (ID: ${response.id})`
-  );
   return newChampionship;
 }
 
@@ -129,8 +126,6 @@ export async function editChampionship(
   user: { id: number; role: string }
 ) {
   const { id, name } = championshipData;
-  if (!name) throw new Error('Todos os campos devem estar preenchidos!');
-
   const championshipRepository = AppDataSource.getRepository(Championship);
   const championship = await championshipRepository.findOne({
     where: { id: id },
@@ -146,9 +141,15 @@ export async function editChampionship(
 
   //Verificações e validações dos premios
   for (const award of awards) {
-    const result = await awardsRepository.findBy({ id: award.award });
+    // award.award pode ser um número (ID) ou um objeto Award
+    const awardId =
+      typeof award.award === 'number' ? award.award : (award.award?.id ?? null);
+    if (!awardId) {
+      throw new Error('ID do prêmio inválido!');
+    }
+    const result = await awardsRepository.findBy({ id: awardId });
     if (result.length === 0)
-      throw new Error(`Prêmio com ID ${award.award} não encontrado!`);
+      throw new Error(`Prêmio com ID ${awardId} não encontrado!`);
   }
 
   //Verificações e validações para criação dos campeonatos e premios
@@ -156,9 +157,10 @@ export async function editChampionship(
     AppDataSource.getRepository(AwardsChampionship);
 
   for (let i = 0; i < awards.length; i++) {
-    if (awards[i]?.id) {
+    const awardId = awards[i]?.id;
+    if (awardId) {
       const find = await awardsChampionshipRepository.findOneBy({
-        id: awards[i].id,
+        id: awardId,
       });
       if (!find) {
         throw new Error('ID não encontrado');
@@ -167,12 +169,20 @@ export async function editChampionship(
         .createQueryBuilder()
         .update(AwardsChampionship)
         .set({ award: { id: awards[i]?.award } as any })
-        .where('id = :id', { id: awards[i]?.id })
+        .where('id = :id', { id: awardId })
         .execute();
     } else {
+      // award.award pode ser um número (ID) ou um objeto Award
+      const awardIdForCreate =
+        typeof awards[i]?.award === 'number'
+          ? awards[i]?.award
+          : (awards[i]?.award?.id ?? null);
+      if (!awardIdForCreate || typeof awardIdForCreate !== 'number') {
+        throw new Error('ID do prêmio inválido para criação!');
+      }
       const awardChampionship = {
-        award: { id: awards[i]?.award } as any,
-        championship: id,
+        award: { id: awardIdForCreate as number },
+        championship: { id: id },
       };
       const newAwardChampionship =
         awardsChampionshipRepository.create(awardChampionship);
@@ -186,11 +196,7 @@ export async function editChampionship(
     .set({ name })
     .where('id = :id', { id })
     .execute();
-  await createLog(
-    user.id,
-    'UPDATE_CHAMPIONSHIP',
-    `Campeonato editado: ${name} (ID: ${id})`
-  );
+
   return 'Edição realizada com sucesso!';
 }
 
@@ -198,8 +204,6 @@ export async function deleteChampionship(
   id: number,
   user: { id: number; role: string }
 ) {
-  if (!id)
-    throw new Error('Necessário inserir o ID para poder realizar a exclusão!');
   const championshipRepository = AppDataSource.getRepository(Championship);
   const championship = await championshipRepository.findOne({
     where: { id: id },
@@ -230,10 +234,5 @@ export async function deleteChampionship(
     await manager.delete(Championship, { id });
   });
 
-  await createLog(
-    user.id,
-    'DELETE_CHAMPIONSHIP',
-    `Campeonato deletado: ${championship.name} (ID: ${id})`
-  );
-  return 'Campeonato deletado com sucesso!';
+  return { text: 'Campeonato deletado com sucesso!', championship };
 }

@@ -35,15 +35,18 @@ import {
 } from './styled';
 import Loading from '../../../components/loading';
 import { FaTrashAlt, FaCheck } from 'react-icons/fa';
-import { addScore, getUser } from '../../../services/utils';
+import { addScore } from '../../../services/utils';
+import { useApp } from '../../../contexts/AppContext';
+import { type Match, type Gamer, type Metric } from '../../../types/types';
 
 export default function Match() {
+  const ctx = useApp();
   const navigate = useNavigate();
   const { id } = useParams();
-  const [match, setMatch] = useState([]);
+  const [match, setMatch] = useState<Match[]>([]);
   const [newScore, setNewScore] = useState('');
   const [winner, setWinner] = useState('Indefinido');
-  const [gamers, setGamers] = useState<any[]>([]);
+  const [gamers, setGamers] = useState<Gamer[]>([]);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const statusFront = {
@@ -51,7 +54,7 @@ export default function Match() {
     playing: `Jogando`,
     finished: `Finalizada`,
   };
-  const user = getUser();
+  const user = ctx.user;
   // estados para o formulário de métricas
   const [metricType, setMetricType] = useState<string>('gol');
   const [metricQty, setMetricQty] = useState<number>(1);
@@ -59,9 +62,7 @@ export default function Match() {
   const [metricPlayerId, setMetricPlayerId] = useState<number | ''>('');
 
   // lista local de métricas (exibe as carregadas + as novas enviadas)
-  const [metrics, setMetrics] = useState<
-    { id?: number; type: string; quantity: number; description: string }[]
-  >([]);
+  const [metrics, setMetrics] = useState<Metric[]>([]);
 
   // Tipos de métricas exibidos no Select
   const METRIC_TYPES = [
@@ -240,7 +241,7 @@ export default function Match() {
   return (
     <Container>
       {loading && <Loading fullscreen message='Carregando dados...' />}
-      {user.id === match?.[0]?.championship?.admin?.id && (
+      {user?.id === match?.[0]?.championship?.admin?.id && (
         <Left>
           <div
             style={{
@@ -269,7 +270,7 @@ export default function Match() {
           </Title>
           <Card>
             <Meta>
-              {user.id === match?.[0].championship?.admin?.id ? (
+              {user?.id === match?.[0].championship?.admin?.id ? (
                 <PillSelect
                   onChange={e => {
                     const status = e.target.value;
@@ -306,8 +307,8 @@ export default function Match() {
               )}
 
               <Champ>
-                <Link to={`/championship/${match[0]?.championship.id}`}>
-                  {match[0]?.championship.name}
+                <Link to={`/championship/${match[0]?.championship?.id}`}>
+                  {match[0]?.championship?.name}
                 </Link>
               </Champ>
             </Meta>
@@ -319,7 +320,7 @@ export default function Match() {
                     <Logo
                       src={`http://localhost:3333/team/${match[0].team1.id}/logo`}
                       alt={match[0].team1.name}
-                      onClick={() => navigate(`/team/${match[0].team1.id}`)}
+                      onClick={() => navigate(`/team/${match[0].team1?.id}`)}
                     />
                   )}
                   <Name>
@@ -332,7 +333,7 @@ export default function Match() {
 
               <Score>
                 {isEditing ? (
-                  user.id === match?.[0]?.championship?.admin?.id && (
+                  user?.id === match?.[0]?.championship?.admin?.id && (
                     <>
                       <input
                         type='text'
@@ -348,7 +349,7 @@ export default function Match() {
                 ) : (
                   <h1
                     onClick={() => {
-                      if (user.id === match?.[0]?.championship?.admin?.id) {
+                      if (user?.id === match?.[0]?.championship?.admin?.id) {
                         setIsEditing(true);
                       }
                     }}
@@ -369,7 +370,7 @@ export default function Match() {
                     <Logo
                       src={`http://localhost:3333/team/${match[0].team2.id}/logo`}
                       alt={match[0].team2.name}
-                      onClick={() => navigate(`/team/${match[0].team2.id}`)}
+                      onClick={() => navigate(`/team/${match[0].team2?.id}`)}
                     />
                   )}
                 </Team>
@@ -387,16 +388,20 @@ export default function Match() {
                   >
                     <button
                       onClick={() => {
-                        handleWinner(match[0].team1.id);
-                        setWinner(match[0].team1.name);
+                        if (match?.[0]?.team1?.id) {
+                          handleWinner(match[0].team1.id);
+                          setWinner(match[0].team1.name ?? '');
+                        }
                       }}
                     >
                       Definir time 1 vencedor
                     </button>
                     <button
                       onClick={() => {
-                        handleWinner(match[0].team2.id);
-                        setWinner(match[0].team2.name);
+                        if (match?.[0]?.team2?.id) {
+                          handleWinner(match[0].team2.id);
+                          setWinner(match[0].team2.name ?? '');
+                        }
                       }}
                     >
                       Definir time 2 vencedor
@@ -417,7 +422,7 @@ export default function Match() {
               <h1>Métricas</h1>
             </Center>
 
-            {user.id === match?.[0]?.championship?.admin?.id && (
+            {user?.id === match?.[0]?.championship?.admin?.id && (
               <form onSubmit={handleAddMetric}>
                 <FormRow>
                   <Select
@@ -468,7 +473,7 @@ export default function Match() {
                     </option>
                     {gamers.map(g => (
                       <option key={g.id} value={g.id}>
-                        {g.user.name}
+                        {g?.user?.name}
                       </option>
                     ))}
                   </Select>
@@ -502,12 +507,13 @@ export default function Match() {
             <h1>Premios</h1>
           </Center>
           <PrizeGrid>
-            {match[0].championship?.awardsChampionships.length > 0 ? (
-              match[0].championship?.awardsChampionships?.map((p, i) => (
+            {(match?.[0]?.championship?.awardsChampionships?.length ?? 0) >
+            0 ? (
+              match?.[0]?.championship?.awardsChampionships?.map((p, i) => (
                 <PrizeCard key={i}>
                   <PrizeBadge aria-hidden>🏆</PrizeBadge>
-                  <PrizeTitle>{p.award.description}</PrizeTitle>
-                  {p.award.others && <PrizeDesc>{p.award.others}</PrizeDesc>}
+                  <PrizeTitle>{p.award?.description}</PrizeTitle>
+                  {p.award?.others && <PrizeDesc>{p.award?.others}</PrizeDesc>}
                 </PrizeCard>
               ))
             ) : (

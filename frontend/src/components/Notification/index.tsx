@@ -32,7 +32,7 @@ const CustomToast = ({
   type,
   details,
 }: CustomToastProps) =>
-  type === 'team_accept' ? (
+  type === 'team_accept' || type === 'team_leave' || type === 'team_invite' ? (
     <NotificationContainer>
       <NotificationContent>
         <NotificationMessage>{message}</NotificationMessage>
@@ -84,7 +84,8 @@ export const toastConfirm = (
   onConfirm?: () => void,
   onCancel?: () => void
 ) => {
-  const isTeamAccept = type === 'team_accept';
+  const isInvites =
+    type === 'team_accept' || type === 'team_leave' || type === 'team_invite';
 
   toast(
     ({ closeToast }) => (
@@ -99,7 +100,7 @@ export const toastConfirm = (
     ),
     {
       position: 'top-right',
-      autoClose: isTeamAccept ? false : 5000,
+      autoClose: isInvites ? false : 5000,
       closeOnClick: false,
       draggable: false,
     }
