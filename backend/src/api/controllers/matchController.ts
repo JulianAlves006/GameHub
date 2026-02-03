@@ -2,6 +2,16 @@ import type { Response } from 'express';
 import * as matchHandler from '../handlers/matchesHandler.ts';
 
 class MatchController {
+  getMatchesPlayingFinished = async (req: any, res: Response) => {
+    try {
+      const response =
+        await matchHandler.getMatchesPlayingFinishedCountHandler();
+      res.status(200).json(response);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  };
+
   getMatches = async (req: any, res: Response) => {
     try {
       const page = parseInt(req.query.page) || 1;

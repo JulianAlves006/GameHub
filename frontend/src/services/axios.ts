@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 
 const api = axios.create({
   baseURL: 'http://localhost:3333',

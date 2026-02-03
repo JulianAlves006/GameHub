@@ -1,25 +1,37 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Card, Container, Left, Right, Title } from '../../../style';
+import { cn } from '@/lib/utils';
 import { useParams } from 'react-router-dom';
 import api from '../../../services/axios';
-import { Logo, Matches } from './styled';
 import { Table } from '../../../components/Table';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import Loading from '../../../components/loading';
-import { FaCheck, FaEdit, FaWindowClose } from 'react-icons/fa';
+import {
+  FaCheck,
+  FaEdit,
+  FaTimesCircle,
+  FaUserAlt,
+  FaWindowClose,
+} from 'react-icons/fa';
 import { formatMetricsForChart } from '../../../services/utils';
 import RadarChart from '../../../components/RadarChart';
 import FileInput from '../../../components/FileInput';
 import { useNotifications } from '../../../hooks/useNotifications';
 import { useApp } from '../../../contexts/AppContext';
-import type { Match, Team } from '../../../types/types';
+import type { Match, Team as TeamType } from '../../../types/types';
+import { Button } from '../../../components/ui/button';
+import { Input } from '../../../components/ui/input';
+import { isAxiosError } from 'axios';
+import { Card, CardContent } from '@/components/ui/card';
+import { Crown, Edit, PenSquare, Shield, Star } from 'lucide-react';
 
 export default function Team() {
   const { id } = useParams();
   const ctx = useApp();
   const user = ctx.user;
-  const [team, setTeam] = useState<Team>();
-  const [gamers, setGamers] = useState([]);
+  const [team, setTeam] = useState<TeamType>();
+  const [gamers, setGamers] = useState<
+    { name: string; score: number; hability: string | undefined }[]
+  >([]);
   const [matches, setMatches] = useState<
     {
       link: number;
@@ -43,10 +55,14 @@ export default function Team() {
   const { createNotifications } = useNotifications({ setLoading });
 
   const haveTeamIsgamer =
-    user?.profile === 'gamer' && user?.gamers?.[0]?.team === null;
+    user?.profile === 'gamer' &&
+    user?.gamers?.[0]?.team === null &&
+    team?.gamer?.id !== user.gamers[0].id;
 
   const canLeaveTeam =
-    user?.profile === 'gamer' && user?.gamers?.[0]?.team?.id === team?.id;
+    user?.profile === 'gamer' &&
+    user?.gamers?.[0]?.team?.id === team?.id &&
+    team?.gamer?.id !== user?.gamers?.[0]?.id;
 
   function verifyHability(score: number) {
     if (score <= 9999) return 'Iniciante';
@@ -71,13 +87,15 @@ export default function Team() {
         const { data } = await api.get(`team?id=${id}`);
         setTeam(data.teams[0]);
         setName(data.teams[0].name);
-        const gamersData = data.teams[0].gamers.map(g => {
-          return {
-            name: g.user.name,
-            score: g.score,
-            hability: verifyHability(g.score),
-          };
-        });
+        const gamersData = data.teams[0].gamers.map(
+          (g: { user: { name: string }; score: number }) => {
+            return {
+              name: g.user.name,
+              score: g.score,
+              hability: verifyHability(g.score),
+            };
+          }
+        );
 
         setGamers(
           gamersData.sort((a: { score: number }, b: { score: number }) =>
@@ -111,8 +129,12 @@ export default function Team() {
         }
 
         setTeamMetrics(metricsSum);
-      } catch (error: any) {
-        toast.error(error.response.data.error);
+      } catch (error: unknown) {
+        if (isAxiosError(error)) {
+          toast.error(error.response?.data?.error || 'Erro');
+        } else {
+          toast.error('Erro');
+        }
       } finally {
         setLoading(false);
       }
@@ -122,17 +144,23 @@ export default function Team() {
       if (!id) return;
       setLoading(true);
       try {
-        const { data } = await api.get<Match[]>(
-          `/match?page=${page}&idTeam=${id}`
+        const { data } = await api.get<{ count: number; matches: Match[] }>(
+          `/match?page=${page}&limit=100&idTeam=${id}`
         );
+
+        if (!data.matches || data.matches.length === 0) {
+          setMatches([]);
+          return;
+        }
+
         let frontData;
         if (
           filter === 'finished' ||
           filter === 'playing' ||
           filter === 'pending'
         ) {
-          frontData = data
-            ?.filter(d => d.status === filter)
+          frontData = data.matches
+            .filter(d => d.status === filter)
             .map(d => ({
               link: d.id,
               championship: d?.championship?.name,
@@ -143,22 +171,25 @@ export default function Team() {
               status: statusFront[d.status as keyof typeof statusFront],
             }));
         } else {
-          frontData = data
-            ?.filter(d => d.status !== 'finished')
-            .map(d => ({
-              link: d.id,
-              championship: d?.championship?.name,
-              championshipId: d?.championship?.id,
-              team1: d?.team1?.name,
-              team2: d?.team2?.name,
-              winner: d?.winner?.name ?? 'Indefinido',
-              status: statusFront[d.status as keyof typeof statusFront],
-            }));
+          // Quando não há filtro específico, mostra todas as partidas
+          frontData = data.matches.map(d => ({
+            link: d.id,
+            championship: d?.championship?.name,
+            championshipId: d?.championship?.id,
+            team1: d?.team1?.name,
+            team2: d?.team2?.name,
+            winner: d?.winner?.name ?? 'Indefinido',
+            status: statusFront[d.status as keyof typeof statusFront],
+          }));
         }
 
         setMatches(frontData);
-      } catch (error: any) {
-        toast.error(error.response.data.error);
+      } catch (error: unknown) {
+        if (isAxiosError(error)) {
+          toast.error(error.response?.data?.error || 'Erro');
+        } else {
+          toast.error('Erro');
+        }
       } finally {
         setLoading(false);
       }
@@ -166,6 +197,7 @@ export default function Team() {
 
     getTeam();
     getMatches();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, page, filter]);
 
   async function handleEdit() {
@@ -190,8 +222,12 @@ export default function Team() {
       await api.put('/team', fd);
       toast.success('Time editado com sucesso');
       return;
-    } catch (error: any) {
-      toast.error(error?.response?.data?.error || 'Erro ao editar time');
+    } catch (error: unknown) {
+      if (isAxiosError(error)) {
+        toast.error(error.response?.data?.error || 'Erro ao editar time');
+      } else {
+        toast.error('Erro ao editar time');
+      }
     } finally {
       setLoading(false);
       setIsEditing(false);
@@ -273,135 +309,193 @@ export default function Team() {
   }, [teamMetrics, name]);
 
   return (
-    <Container>
+    <section className='flex flex-col w-full min-h-screen p-4'>
       {haveTeamIsgamer && (
-        <Right>
-          <button
+        <div className='w-[90%] m-5 flex justify-end gap-2'>
+          <Button
             onClick={e => {
               e.preventDefault();
               handleNotification();
             }}
           >
             Solicitar para entrar no time
-          </button>
-        </Right>
+          </Button>
+        </div>
       )}
       {canLeaveTeam && (
-        <Right>
-          <button
+        <div className='w-[90%] m-5 flex justify-end gap-2'>
+          <Button
+            variant='destructive'
             onClick={e => {
               e.preventDefault();
               handleLeaveTeam();
             }}
           >
             Solicitar para sair do time
-          </button>
-        </Right>
+          </Button>
+        </div>
       )}
-      {user?.gamers?.[0].id === team?.gamer?.id && (
-        <Left>
-          {isEditing ? (
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                width: '5%',
-                marginTop: '10px',
-                position: 'absolute',
-              }}
-            >
-              <FaWindowClose
-                onClick={() => setIsEditing(false)}
-                color='red'
-                size={20}
-                style={{
-                  cursor: 'pointer',
-                }}
-              />
-              <FaCheck
-                onClick={handleEdit}
-                color='green'
-                size={20}
-                style={{
-                  cursor: 'pointer',
+      {loading && <Loading fullscreen message='Carregando dados...' />}
+      <div className='relative rounded-[40px] overflow-hidden bg-card border border-border mb-10 min-h-[300px] shadow-2xl group'>
+        {/* Background Image with Overlay */}
+        <div className='absolute inset-0'>
+          <img
+            src='https://images.unsplash.com/photo-1516205651411-a8531c5d65c0?q=80&w=2070&auto=format&fit=crop'
+            className='w-full h-full object-cover opacity-40 group-hover:scale-105 transition-transform duration-700'
+          />
+          <div className='absolute inset-0 bg-linear-to-t from-background via-background/60 to-transparent'></div>
+          <div className='absolute inset-0 bg-linear-to-r from-background via-transparent to-transparent'></div>
+        </div>
+
+        {/* Content */}
+        <div className='absolute bottom-0 left-0 right-0 p-10 flex flex-col md:flex-row items-end justify-between gap-8'>
+          <div className='flex items-center gap-8'>
+            <div className='w-32 h-32 border border-secondary rounded-3xl flex items-center justify-center shadow-secondary'>
+              <img
+                className='rounded-3xl'
+                src={`http://localhost:3333/team/${team?.id}/logo`}
+                alt={`${team?.name} logo`}
+                onLoad={() => setLogoLoading(false)}
+                onError={() => {
+                  setLogoLoading(false);
+                  setLogoError(true);
                 }}
               />
             </div>
-          ) : (
-            <FaEdit
-              onClick={() => setIsEditing(true)}
-              style={{
-                marginTop: '10px',
-                position: 'absolute',
-                cursor: 'pointer',
-              }}
-              size={20}
-            />
+            <div className='flex items-center gap-10'>
+              <div>
+                {isEditing ? (
+                  <>
+                    <Input
+                      className='max-w-120 text-5xl md:text-7xl font-black text-card-foreground tracking-tighter mb-2 bg-transparent border-none p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0 pl-2'
+                      value={name}
+                      onChange={e => setName(e.target.value)}
+                    />
+                    <div className='flex gap-5'>
+                      <FileInput
+                        id='logo'
+                        name='logo'
+                        accept='image/*'
+                        value={logo}
+                        onChange={setLogo}
+                        placeholder='Selecionar novo logo'
+                        maxSize={5}
+                        className='w-full'
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <h1 className='text-5xl md:text-7xl font-black text-card-foreground tracking-tighter mb-2'>
+                    {team?.name}
+                  </h1>
+                )}
+              </div>
+              {logo && (
+                <div>
+                  <div className='w-[125px] h-[125px] md:w-[125px] md:h-[125px] border-2 border-destructive rounded-2xl overflow-hidden bg-secondary'>
+                    <img
+                      src={URL.createObjectURL(logo)}
+                      alt='Preview do novo logo'
+                      className='w-full h-full object-cover'
+                      onLoad={e =>
+                        URL.revokeObjectURL((e.target as HTMLImageElement).src)
+                      }
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          {user?.gamers?.[0]?.id === team?.gamer?.id && (
+            <div>
+              {isEditing ? (
+                <div className='flex items-center gap-4 px-6 py-3 bg-card-foreground/5 hover:bg-card-foreground/10 border border-border backdrop-blur-md rounded-xl text-card-foreground font-bold transition-all group-hover:border-purple-500/50'>
+                  <button
+                    className='cursor-pointer text-destructive hover:text-destructive/80'
+                    onClick={() => setIsEditing(false)}
+                  >
+                    <FaTimesCircle size={20} />
+                  </button>
+                  <button
+                    className='cursor-pointer text-green-500 hover:text-green-600'
+                    onClick={handleEdit}
+                  >
+                    <FaCheck size={20} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className='flex items-center gap-2 px-6 py-3 bg-card-foreground/5 hover:bg-card-foreground/10 border border-border backdrop-blur-md rounded-xl text-card-foreground font-bold transition-all group-hover:border-purple-500/50'
+                >
+                  <Edit size={18} />
+                  Editar Time
+                </button>
+              )}
+            </div>
           )}
-        </Left>
-      )}
-      {loading && <Loading fullscreen message='Carregando dados...' />}
+        </div>
+      </div>
       {team?.id ? (
-        <>
-          {logoLoading && <Loading message='Carregando logo...' />}
-          {!logoError && (
-            <Logo
-              src={`http://localhost:3333/team/${team.id}/logo`}
-              alt={`${team.name} logo`}
-              onLoad={() => setLogoLoading(false)}
-              onError={() => {
-                setLogoLoading(false);
-                setLogoError(true);
-              }}
-              style={{ display: logoLoading ? 'none' : 'block' }}
-            />
-          )}
-          {isEditing ? (
-            <>
-              <FileInput
-                id='logo'
-                name='logo'
-                accept='image/*'
-                value={logo}
-                onChange={setLogo}
-                label='Logo do Time'
-                placeholder='Selecionar novo logo'
-                maxSize={5}
-              />
-              <Title>
-                <input
-                  type='text'
-                  value={name}
-                  onChange={e => setName(e.target.value)}
+        <div className='w-full'>
+          <div className='w-full grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-10 px-10'>
+            {/* Radar Chart */}
+            <div className='w-full h-[400px] lg:h-[500px] flex items-center justify-center'>
+              <div className='w-full h-full'>
+                <RadarChart
+                  config={{
+                    type: 'radar',
+                    data: chartData,
+                    options: {
+                      elements: {
+                        line: {
+                          borderWidth: 3,
+                        },
+                      },
+                    },
+                  }}
                 />
-              </Title>
-            </>
-          ) : (
-            <Title>{name}</Title>
-          )}
+              </div>
+            </div>
+
+            {/* Team Info Section */}
+            <div className='w-full flex flex-col gap-20 relative'>
+              {/* Responsible Card */}
+              <Card className='w-full'>
+                <div className='flex items-center'>
+                  <div className='mx-5 mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10'>
+                    <Crown className='h-5 w-5 text-purple-500' />
+                  </div>
+                  Responsável do time
+                </div>
+                <CardContent className='flex flex-col items-center mt-5 gap-5'>
+                  <FaUserAlt size={100} />
+                  <div className='flex flex-col items-center'>
+                    <span className='text-2xl md:text-3xl font-bold truncate'>
+                      {team?.gamer?.user?.name || 'Não definido'}
+                    </span>
+                    <p className='text-muted-foreground'>
+                      Score: {team?.gamer?.score.toLocaleString('pt-br')}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+          <h2 className='ml-20 text-3xl font-bold my-6 text-foreground'>
+            Jogadores
+          </h2>
           <Table config={config} data={gamers} />
-          <Matches>Partidas</Matches>
+          <h2 className='ml-20 text-3xl font-bold my-6 text-foreground'>
+            Partidas
+          </h2>
           <Table config={configMatches} data={matches} />
-          <RadarChart
-            config={{
-              type: 'radar',
-              data: chartData,
-              options: {
-                elements: {
-                  line: {
-                    borderWidth: 3,
-                  },
-                },
-              },
-            }}
-          />
-          <Card style={{ display: 'flex', justifyContent: 'center' }}>
-            <h3>Responsavel do time: {team?.gamer?.user?.name}</h3>
-          </Card>
-        </>
+        </div>
       ) : (
-        <h1>Carregando</h1>
+        <h1 className='text-2xl font-semibold text-muted-foreground'>
+          Carregando
+        </h1>
       )}
-    </Container>
+    </section>
   );
 }

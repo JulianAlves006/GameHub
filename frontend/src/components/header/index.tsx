@@ -1,23 +1,22 @@
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { FaUserAlt } from 'react-icons/fa';
+import { cn } from '@/lib/utils';
 
 import icon from '../../assets/icon.png';
 import logo from '../../assets/logo.png';
+import withoutLogo from '../../assets/withoutLogo.png';
 
-import {
-  Nav,
-  UserInfo,
-  Links,
-  LogoSection,
-  NavLink,
-  TeamLogo,
-  UserLink,
-} from './styled';
 import { useEffect, useState } from 'react';
+import { isAxiosError } from 'axios';
+import api from '../../services/axios';
 import Loading from '../../components/loading';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useApp } from '../../contexts/AppContext';
 import type { Team } from '../../types/types';
+import { ThemeToggle } from '../ThemeToggle';
+import { DropdownMenu, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import DropDownMenu from './DropDownMenu';
+import { Button } from '../ui/button';
 
 export default function Header() {
   const ctx = useApp();
@@ -27,9 +26,36 @@ export default function Header() {
   const team = user?.gamers?.[0]?.team;
   const [loading, setLoading] = useState(false);
   const { getNotifications } = useNotifications({ setLoading });
+  const [teamAdmin, setTeamAdmin] = useState<Team>();
+  const gamerId = user?.gamers?.[0]?.id;
+
   useEffect(() => {
     getNotifications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    async function getTeamAdmin() {
+      if (!gamerId) {
+        setTeamAdmin(undefined);
+        return;
+      }
+      try {
+        const { data } = await api.get(`/team?idAdmin=${gamerId}`);
+        if (data.teams && data.teams.length > 0) {
+          setTeamAdmin(data.teams[0]);
+        } else {
+          setTeamAdmin(undefined);
+        }
+      } catch (error: unknown) {
+        if (isAxiosError(error)) {
+          // Silenciosamente falha se não encontrar time
+          setTeamAdmin(undefined);
+        }
+      }
+    }
+    getTeamAdmin();
+  }, [gamerId]);
 
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -38,59 +64,147 @@ export default function Header() {
   return (
     <>
       {loading && <Loading fullscreen message='Carregando dados...' />}
-      <Nav>
-        <LogoSection onClick={() => navigate('/home')}>
-          <img src={icon} className='icon' alt='GameHub Icon' />
-          <img src={logo} className='logo' alt='GameHub Logo' />
-        </LogoSection>
+      <nav
+        className={cn(
+          'bg-card px-6 py-4 flex items-center justify-between w-full',
+          'shadow-md border-b border-border',
+          'sticky top-0 z-50',
+          'max-md:px-4 max-md:py-3 max-md:flex-wrap max-md:gap-3'
+        )}
+      >
+        {/* Logo Section */}
+        <div
+          onClick={() => navigate('/home')}
+          className={cn(
+            'flex items-center gap-3 cursor-pointer',
+            'transition-opacity hover:opacity-80'
+          )}
+        >
+          <img
+            src={icon}
+            className='w-10 h-10 object-contain transition-transform hover:scale-105 max-md:w-8 max-md:h-8'
+            alt='GameHub Icon'
+          />
+          <img
+            src={logo}
+            className='h-8 object-contain transition-transform hover:scale-102 max-md:h-7'
+            alt='GameHub Logo'
+          />
+        </div>
 
-        <Links>
-          <NavLink to='/home' className={isActive('/home') ? 'active' : ''}>
+        {/* Navigation Links */}
+        <div
+          className={cn(
+            'flex items-center gap-2 flex-1 justify-center',
+            'max-md:order-3 max-md:w-full max-md:justify-around max-md:mt-2'
+          )}
+        >
+          <NavLink to='/home' active={isActive('/home')}>
             Rankings de times
           </NavLink>
-          <NavLink to='/gamers' className={isActive('/gamers') ? 'active' : ''}>
+          <NavLink to='/gamers' active={isActive('/gamers')}>
             Rankings de jogadores
           </NavLink>
-          <NavLink
-            to='/matches'
-            className={isActive('/matches') ? 'active' : ''}
-          >
+          <NavLink to='/matches' active={isActive('/matches')}>
             Partidas
           </NavLink>
-          <NavLink
-            to='/championships'
-            className={isActive('/championships') ? 'active' : ''}
-          >
+          <NavLink to='/championships' active={isActive('/championships')}>
             Campeonatos
           </NavLink>
-          {(user?.gamers?.[0]?.score ?? 0) >= 50000 && !team && (
-            <NavLink to='/team' className={isActive('/team') ? 'active' : ''}>
-              Criar time
-            </NavLink>
-          )}
-        </Links>
+          {((user?.gamers?.[0]?.score ?? 0) >= 50000 && !team) ||
+            (!teamAdmin && (
+              <NavLink to='/team' active={isActive('/team')}>
+                Criar time
+              </NavLink>
+            ))}
+        </div>
 
+        {/* User Info */}
         {user && (
-          <UserInfo>
-            {team && (team as Team).logo && (
-              <TeamLogo
+          <div
+            className={cn(
+              'flex items-center gap-3 ml-auto',
+              'max-md:ml-0 max-md:order-2'
+            )}
+          >
+            <ThemeToggle />
+            {team && (
+              <img
                 onClick={() => navigate(`/team/${team.id}`)}
                 src={`http://localhost:3333/team/${(team as Team).id}/logo`}
                 alt={`${(team as Team).name} logo`}
                 onError={e => {
-                  (e.currentTarget as HTMLImageElement).style.display = 'none';
+                  e.currentTarget.src = withoutLogo;
                 }}
+                className={cn(
+                  'w-10 h-10 object-cover rounded-lg',
+                  'border-2 border-secondary cursor-pointer',
+                  'transition-all hover:scale-105 hover:border-primary',
+                  'shadow-md max-md:w-8 max-md:h-8'
+                )}
               />
             )}
-            <UserLink to='/user'>
-              <h3>
-                {user?.name}
-                <FaUserAlt size={16} />
-              </h3>
-            </UserLink>
-          </UserInfo>
+            {teamAdmin && !team && (
+              <img
+                onClick={() => navigate(`/team/${teamAdmin.id}`)}
+                src={`http://localhost:3333/team/${teamAdmin.id}/logo`}
+                alt={`${teamAdmin.name} logo`}
+                onError={e => {
+                  e.currentTarget.src = withoutLogo;
+                }}
+                className={cn(
+                  'w-10 h-10 object-cover rounded-lg',
+                  'border-2 border-secondary cursor-pointer',
+                  'transition-all hover:scale-105 hover:border-primary',
+                  'shadow-md max-md:w-8 max-md:h-8'
+                )}
+              />
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  className={cn(
+                    'flex items-center gap-2 text-foreground',
+                    'px-3 py-2 rounded-lg transition-all font-medium',
+                    'hover:bg-primary/10 hover:text-primary cursor-pointer',
+                    'max-md:px-2 max-md:py-1.5 border-none bg-transparent'
+                  )}
+                >
+                  <span className='text-sm flex items-center gap-2.5 max-md:text-xs'>
+                    {user?.name}
+                    <FaUserAlt size={14} />
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropDownMenu />
+            </DropdownMenu>
+          </div>
         )}
-      </Nav>
+      </nav>
     </>
+  );
+}
+
+// NavLink Component
+interface NavLinkProps {
+  to: string;
+  active?: boolean;
+  children: React.ReactNode;
+}
+
+function NavLink({ to, active, children }: NavLinkProps) {
+  return (
+    <Link
+      to={to}
+      className={cn(
+        'text-foreground no-underline px-4 py-2 rounded-lg',
+        'font-medium text-sm transition-all whitespace-nowrap',
+        'hover:bg-primary/40 hover:text-secondary',
+        active && 'bg-primary/70 text-secondary',
+        'max-md:px-3 max-md:py-1.5 max-md:text-xs'
+      )}
+    >
+      {children}
+    </Link>
   );
 }

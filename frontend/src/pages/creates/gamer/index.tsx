@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Container, Form, Title } from '../../../style';
+import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
+import { isAxiosError } from 'axios';
 import api from '../../../services/axios';
 import Loading from '../../../components/loading';
 import { useApp } from '../../../contexts/AppContext';
+import { Input } from '../../../components/ui/input';
+import { Button } from '../../../components/ui/button';
 
 export default function Gamer() {
   const ctx = useApp();
@@ -36,18 +39,30 @@ export default function Gamer() {
       });
       toast.success('Gamer criado com sucesso!');
       navigate('/');
-    } catch (error: any) {
-      toast.error(error?.response?.data?.error || 'Erro ao criar jogador');
+    } catch (error: unknown) {
+      if (isAxiosError(error)) {
+        toast.error(error.response?.data?.error || 'Erro ao criar jogador');
+      } else {
+        toast.error('Erro ao criar jogador');
+      }
     } finally {
       setLoading(false);
     }
   }
+
   return (
-    <Container>
+    <section className='flex flex-col items-center w-full min-h-screen p-4'>
       {loading && <Loading fullscreen message='Carregando dados...' />}
-      <Title>Criar Jogador</Title>
-      <Form onSubmit={handleSubmit}>
-        <input
+      <h1 className='text-4xl font-bold my-8 text-foreground'>Criar Jogador</h1>
+      <form
+        onSubmit={handleSubmit}
+        className={cn(
+          'relative flex flex-col items-center w-full max-w-2xl mx-auto',
+          'border border-border rounded-xl p-6 shadow-lg',
+          'bg-card text-card-foreground gap-4'
+        )}
+      >
+        <Input
           type='number'
           placeholder='Número de camiseta'
           value={shirtNumber}
@@ -57,9 +72,12 @@ export default function Gamer() {
           min='1'
           max='99'
           required
+          className='w-[60%]'
         />
-        <button>Salvar</button>
-      </Form>
-    </Container>
+        <Button type='submit' className='w-[60%]'>
+          Salvar
+        </Button>
+      </form>
+    </section>
   );
 }

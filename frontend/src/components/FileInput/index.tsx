@@ -1,13 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { FaUpload, FaImage, FaTimes } from 'react-icons/fa';
-import {
-  FileInputContainer,
-  FileInputButton,
-  FileInputHidden,
-  FilePreview,
-  FileName,
-  RemoveButton,
-} from './styled';
+import { cn } from '@/lib/utils';
 
 interface FileInputProps {
   id?: string;
@@ -111,39 +104,74 @@ export const FileInput: React.FC<FileInputProps> = ({
   };
 
   return (
-    <FileInputContainer className={className}>
-      {label && <label htmlFor={id}>{label}</label>}
-      <FileInputButton
+    <div className={cn('flex flex-col w-[60%] my-2.5 self-center', className)}>
+      {label && (
+        <label
+          htmlFor={id}
+          className='text-sm font-semibold text-foreground mb-2'
+        >
+          {label}
+        </label>
+      )}
+
+      <button
+        type='button'
         onClick={handleButtonClick}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
-        $dragActive={dragActive}
-        $disabled={disabled}
-        $hasFile={!!value}
-        $error={!!error}
+        disabled={disabled}
+        className={cn(
+          'text-foreground bg-transparent p-2.5 rounded-lg',
+          'border border-border w-full my-2.5',
+          'text-sm font-medium min-h-[40px]',
+          'flex items-center justify-center',
+          'transition-all cursor-pointer',
+          'hover:brightness-125',
+          'disabled:opacity-50 disabled:cursor-not-allowed',
+          dragActive && 'border-primary bg-primary/10',
+          value && 'border-secondary',
+          error && 'border-destructive'
+        )}
       >
-        <div>
+        <div className='flex items-center gap-2 min-w-0 w-full'>
           {value ? (
             <>
-              <FaImage size={20} />
-              <FileName>{value.name}</FileName>
-              <span>({formatFileSize(value.size)})</span>
-              <RemoveButton onClick={handleRemove} type='button'>
+              <FaImage size={20} className='shrink-0' />
+              <span className='font-semibold text-primary text-sm min-w-0 overflow-hidden text-ellipsis whitespace-nowrap flex-1'>
+                {value.name.length > 20
+                  ? `${value.name.substring(0, 20)}...`
+                  : value.name}
+              </span>
+              <span className='text-xs shrink-0 hidden sm:inline'>
+                ({formatFileSize(value.size)})
+              </span>
+              <button
+                onClick={handleRemove}
+                type='button'
+                className={cn(
+                  'flex items-center justify-center shrink-0',
+                  'w-5 h-5 rounded-full',
+                  'bg-destructive text-white border-none',
+                  'cursor-pointer transition-all',
+                  'hover:bg-red-700 hover:scale-110',
+                  'active:scale-95'
+                )}
+              >
                 <FaTimes size={12} />
-              </RemoveButton>
+              </button>
             </>
           ) : (
             <>
-              <FaUpload size={20} />
-              <span>{placeholder}</span>
+              <FaUpload size={20} className='shrink-0' />
+              <span className='truncate'>{placeholder}</span>
             </>
           )}
         </div>
-      </FileInputButton>
+      </button>
 
-      <FileInputHidden
+      <input
         ref={fileInputRef}
         type='file'
         id={id}
@@ -151,10 +179,11 @@ export const FileInput: React.FC<FileInputProps> = ({
         accept={accept}
         onChange={handleFileChange}
         disabled={disabled}
+        className='hidden'
       />
 
-      {value && (
-        <FilePreview>
+      {/* {value && (
+        <div className='mt-2 flex justify-center'>
           {value.type.startsWith('image/') && (
             <img
               src={URL.createObjectURL(value)}
@@ -162,13 +191,14 @@ export const FileInput: React.FC<FileInputProps> = ({
               onLoad={e =>
                 URL.revokeObjectURL((e.target as HTMLImageElement).src)
               }
+              className='max-w-[80px] max-h-[80px] object-cover rounded-md border border-secondary shadow-md'
             />
           )}
-        </FilePreview>
-      )}
+        </div>
+      )} */}
 
-      {error && <span className='error'>{error}</span>}
-    </FileInputContainer>
+      {error && <span className='text-destructive text-xs mt-1'>{error}</span>}
+    </div>
   );
 };
 

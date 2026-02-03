@@ -3,6 +3,71 @@ import { Gamer, Team, Metric } from '../entities/index.ts';
 
 const gamerRepository = AppDataSource.getRepository(Gamer);
 
+export async function getTopGamers() {
+  // 1. Jogador com maior score
+  const topScorer = await gamerRepository
+    .createQueryBuilder('gamer')
+    .leftJoinAndSelect('gamer.user', 'user')
+    .orderBy('gamer.score', 'DESC')
+    .getOne();
+
+  // 2. Jogador com mais gols
+  const topGoalScorer = await gamerRepository
+    .createQueryBuilder('gamer')
+    .leftJoinAndSelect('gamer.user', 'user')
+    .leftJoin('gamer.metrics', 'metrics')
+    .addSelect(
+      'COALESCE(SUM(CASE WHEN metrics.type = :golType THEN metrics.quantity ELSE 0 END), 0)',
+      'totalGoals'
+    )
+    .setParameter('golType', 'gol')
+    .groupBy('gamer.id')
+    .addGroupBy('user.id')
+    .orderBy('totalGoals', 'DESC')
+    .getRawAndEntities();
+
+  // 3. Jogador com mais defesas
+  const topGoalkeeper = await gamerRepository
+    .createQueryBuilder('gamer')
+    .leftJoinAndSelect('gamer.user', 'user')
+    .leftJoin('gamer.metrics', 'metrics')
+    .addSelect(
+      'COALESCE(SUM(CASE WHEN metrics.type = :defesaType THEN metrics.quantity ELSE 0 END), 0)',
+      'totalSaves'
+    )
+    .setParameter('defesaType', 'defesa')
+    .groupBy('gamer.id')
+    .addGroupBy('user.id')
+    .orderBy('totalSaves', 'DESC')
+    .getRawAndEntities();
+
+  return {
+    topScorer: topScorer
+      ? {
+          id: topScorer.id,
+          name: topScorer.user?.name,
+          score: topScorer.score,
+        }
+      : null,
+    topGoalScorer:
+      topGoalScorer.entities.length > 0
+        ? {
+            id: topGoalScorer.entities[0]?.id,
+            name: topGoalScorer.entities[0]?.user?.name,
+            goals: parseInt(topGoalScorer.raw[0]?.totalGoals || '0'),
+          }
+        : null,
+    topGoalkeeper:
+      topGoalkeeper.entities.length > 0
+        ? {
+            id: topGoalkeeper.entities[0]?.id,
+            name: topGoalkeeper.entities[0]?.user?.name,
+            saves: parseInt(topGoalkeeper.raw[0]?.totalSaves || '0'),
+          }
+        : null,
+  };
+}
+
 export async function getGamers(
   page: number = 1,
   limit: number = 10,
@@ -99,23 +164,6 @@ export async function updateGamer(body: any) {
   });
 
   if (!gamer) throw new Error('Gamer não encontrado');
-  if (gamer.team) {
-    const teamData = await AppDataSource.getRepository(Team).findOne({
-      where: { id: gamer.team.id },
-      relations: {
-        matchesAsTeam1: true,
-        matchesAsTeam2: true,
-      },
-    });
-    if (teamData?.matchesAsTeam1.some(match => match.status === 'playing'))
-      throw new Error(
-        'Gamer está em uma partida, portanto por enquanto não pode ser editado!'
-      );
-    if (teamData?.matchesAsTeam2.some(match => match.status === 'playing'))
-      throw new Error(
-        'Gamer está em uma partida, portanto por enquanto não pode ser editado!'
-      );
-  }
 
   const updateData: any = {};
 

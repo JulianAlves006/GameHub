@@ -2,6 +2,15 @@ import type { Response } from 'express';
 import * as gamerHandler from '../handlers/gamerHandler.ts';
 
 class GamerController {
+  getTopGamers = async (req: any, res: Response) => {
+    try {
+      const response = await gamerHandler.getTopGamersHandler();
+      res.status(200).json(response);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  };
+
   getGamers = async (req: any, res: Response) => {
     try {
       const page = parseInt(req.query.page) || 1;

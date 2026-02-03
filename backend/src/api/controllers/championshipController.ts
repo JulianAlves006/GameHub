@@ -4,9 +4,30 @@ import * as championshipHandler from '../handlers/championshipHandler.ts';
 class ChampionshipController {
   getChampionship = async (req: any, res: Response) => {
     try {
+      const idChampionship = req.query.idChampionship
+        ? parseInt(req.query.idChampionship)
+        : undefined;
+      const idAdmin = req.query.idAdmin
+        ? parseInt(req.query.idAdmin)
+        : undefined;
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+
+      // Validar parâmetros
+      if (page < 1) {
+        return res.status(400).json({ error: 'Página deve ser maior que 0' });
+      }
+      if (limit < 1 || limit > 100) {
+        return res
+          .status(400)
+          .json({ error: 'Limite deve estar entre 1 e 100' });
+      }
+
       const response = await championshipHandler.getChampionshipHandler(
-        req.query.idChampionship || undefined,
-        req.query.idAdmin || undefined
+        idChampionship,
+        idAdmin,
+        page,
+        limit
       );
       res.status(200).json(response);
     } catch (error: any) {

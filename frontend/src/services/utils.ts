@@ -1,4 +1,5 @@
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
+import { isAxiosError } from 'axios';
 import api from './axios';
 
 export function formatDateFullText(dateStr: string) {
@@ -121,9 +122,13 @@ export async function addScore(score: number, gamer: number) {
       score,
     });
     toast.success('Score adicionado com sucesso!');
-  } catch (error: any) {
-    toast.error(
-      error?.response?.data?.error || 'Falha ao marcar notificações como lidas'
-    );
+  } catch (error: unknown) {
+    if (isAxiosError(error)) {
+      toast.error(
+        error.response?.data?.error || 'Falha ao adicionar score'
+      );
+    } else {
+      toast.error('Falha ao adicionar score');
+    }
   }
 }

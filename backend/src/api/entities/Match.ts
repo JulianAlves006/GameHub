@@ -39,8 +39,14 @@ export class Match {
   @Column({ type: 'varchar', length: 50 })
   status!: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
-  scoreboard!: string;
+  @Column({ type: 'int', nullable: true })
+  scoreTeam1!: number;
+
+  @Column({ type: 'int', nullable: true })
+  scoreTeam2!: number;
+
+  @Column({ type: 'datetime', nullable: true })
+  matchDate!: Date;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

@@ -1,8 +1,8 @@
-import type { Gamer } from '../entities/Gamer.ts';
 import {
   createGamer,
   deleteGamer,
   getGamers,
+  getTopGamers,
   updateGamer,
 } from '../repositories/gamerRepository.ts';
 import { createLog } from '../repositories/logRepository.ts';
@@ -11,6 +11,21 @@ import {
   deleteGamerValidation,
   editGamerValidation,
 } from '../validations/validations.ts';
+
+export async function getTopGamersHandler() {
+  try {
+    const response = await getTopGamers();
+    return response;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Erro no getTopGamersHandler: ', error);
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : 'Erro desconhecido ao tentar listar os top gamers';
+    throw new Error(errorMessage);
+  }
+}
 
 export async function getGamersHandler(
   page: number = 1,

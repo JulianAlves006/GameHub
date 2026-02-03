@@ -4,13 +4,30 @@ import {
   createMatch,
   deleteMatch,
   getMatches,
+  getMatchesPlayingFinishedCount,
   updateMatch,
 } from '../repositories/matchesRepository.ts';
+import { updateMatchesService } from '../services/matchesService.ts';
 import {
   createMatchValidation,
   deleteMatchValidation,
   updateMatchValidation,
 } from '../validations/validations.ts';
+
+export async function getMatchesPlayingFinishedCountHandler() {
+  try {
+    const response = getMatchesPlayingFinishedCount();
+    return response;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Erro no getMatchesPlayingFinishedCountHandler:', error);
+    throw new Error(
+      error instanceof Error
+        ? error.message
+        : 'Erro desconhecido ao buscar contador de partidas jogando e finalizadas'
+    );
+  }
+}
 
 export async function getMatchesHandler(
   page: number = 1,
@@ -67,15 +84,23 @@ export async function updateMatchHandler(
   user: { id: number; role: string }
 ) {
   try {
-    const { id, winner, status, scoreboard } = body;
+    const { id, winner, status, scoreTeam1, scoreTeam2 } = body;
     updateMatchValidation(id, user);
 
     const response = await updateMatch(body, user);
+    const matchesCount = await getMatchesPlayingFinishedCount();
+
+    updateMatchesService(matchesCount);
+
+    const scoreText =
+      scoreTeam1 !== undefined && scoreTeam2 !== undefined
+        ? `, Placar: ${scoreTeam1} x ${scoreTeam2}`
+        : '';
 
     await createLog(
       user.id,
       'UPDATE_MATCH',
-      `Partida editada (ID: ${id}) -${status ? `Status: ${status}` : ''} ${scoreboard ? `, Scoreboard: ${scoreboard}` : ''} ${winner ? `, Vencedor: ${winner}` : ''}`
+      `Partida editada (ID: ${id}) -${status ? `Status: ${status}` : ''}${scoreText}${winner ? `, Vencedor: ${winner}` : ''}`
     );
 
     return response;

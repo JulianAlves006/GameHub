@@ -1,206 +1,369 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import Loading from '../../components/loading';
-import { Title } from '../../style';
-import { Container } from '../../style';
-import { Table } from '../../components/Table';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import api from '../../services/axios';
-import {
-  PageHeader,
-  FilterSelect,
-  PaginationContainer,
-  PaginationButton,
-  TableContainer,
-} from './styled';
 import { useApp } from '../../contexts/AppContext';
+import { Button } from '../../components/ui/button';
+import { isAxiosError } from 'axios';
+import type { Match } from '@/types/types';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  CalendarDays,
+  CheckCircle2,
+  SlidersHorizontal,
+  PlayCircle,
+} from 'lucide-react';
+import { Field } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import DropDownContent from './DropDownContent';
+import MatchCard from '@/components/MatchCard';
+import { io, Socket } from 'socket.io-client';
+
+interface FormattedMatch {
+  link: number;
+  championship: string;
+  championshipId: number;
+  team1Name: string;
+  team2Name: string;
+  team1Id: number;
+  team2Id: number;
+  winner: string;
+  status: string;
+  scoreTeam1: number | null;
+  scoreTeam2: number | null;
+  date: string | null;
+}
+
+const statusFront = {
+  playing: 'Jogando',
+  pending: 'Pendente',
+  finished: 'Finalizada',
+};
 
 export default function Matches() {
   const navigate = useNavigate();
   const ctx = useApp();
-  const [matches, setMatches] = useState([]);
+  const [matches, setMatches] = useState<FormattedMatch[]>([]);
+  const [finished, setFinished] = useState<FormattedMatch[]>([]);
+  const [pending, setPending] = useState<FormattedMatch[]>([]);
+  const [playing, setPlaying] = useState<FormattedMatch[]>([]);
   const [filter, setFilter] = useState('');
+  const [search, setSearch] = useState('');
+  const [count, setCount] = useState(0);
+  const [playingCount, setPlayingCount] = useState(0);
+  const [finishedCount, setFinishedCount] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [totalPages, setTotalPages] = useState(1);
+  const socketRef = useRef<Socket | null>(null);
 
   const id = window.location.search.replace('?', '');
 
-  const statusFront = {
-    playing: 'Jogando',
-    pending: 'Pendente',
-    finished: 'Finalizada',
-  };
+  // Função auxiliar para formatar uma partida
+  const formatMatch = useCallback(
+    (d: Match): FormattedMatch => ({
+      link: d.id,
+      championship: d.championship?.name,
+      championshipId: d.championship?.id,
+      team1Name: d.team1?.name || 'Não definido',
+      team2Name: d.team2?.name || 'Não definido',
+      team1Id: d.team1?.id,
+      team2Id: d.team2?.id,
+      winner: d?.winner?.name ?? 'Indefinido',
+      status: statusFront[d.status as keyof typeof statusFront],
+      scoreTeam1: d.scoreTeam1 ?? null,
+      scoreTeam2: d.scoreTeam2 ?? null,
+      date: d.matchDate ?? null,
+    }),
+
+    []
+  );
+
+  // Função auxiliar para processar e atualizar as partidas
+  const processMatches = useCallback(
+    (matchesnow: Match[]) => {
+      setMatches(matchesnow.map(formatMatch));
+      setFinished(
+        matchesnow
+          ?.filter((d: Match) => d.status === 'finished')
+          .map(formatMatch)
+      );
+      setPlaying(
+        matchesnow
+          ?.filter((d: Match) => d.status === 'playing')
+          .map(formatMatch)
+      );
+      setPending(
+        matchesnow
+          ?.filter((d: Match) => d.status === 'pending')
+          .map(formatMatch)
+      );
+    },
+    [formatMatch]
+  );
 
   useEffect(() => {
     if (!localStorage.getItem('token') || !ctx.user) {
-      toast.error('Você precisa estar logado para poder acessar essa pagina.');
+      if (!ctx.isLoggingOut) {
+        toast.error(
+          'Você precisa estar logado para poder acessar essa pagina.'
+        );
+      }
       navigate('/');
+      return;
     }
+
+    async function getPlayingFinishedCount() {
+      setLoading(true);
+      try {
+        const { data } = await api.get<{ playing: number; finished: number }>(
+          '/matchesCount'
+        );
+
+        setPlayingCount(data.playing);
+        setFinishedCount(data.finished);
+      } catch (error) {
+        if (isAxiosError(error)) {
+          toast.error(
+            error.response?.data?.error ||
+              'Erro ao pegar a contagem de partidas jogando e finalizadas'
+          );
+        } else {
+          toast.error('Erro');
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+
     async function getMatches() {
       setLoading(true);
       try {
         const endpoint = id
           ? `/match?page=${page}&idChampionship=${id}`
-          : `/match?page=${page}`;
+          : `/match?page=${page}&limit=12`;
 
         const { data } = await api.get(endpoint);
 
-        let frontData;
-        // Se houver filtro específico, aplicar filtro
-        if (
-          filter === 'finished' ||
-          filter === 'playing' ||
-          filter === 'pending'
-        ) {
-          frontData = data
-            ?.filter((d: any) => d.status === filter)
-            .map((d: any) => ({
-              link: d.id,
-              championship: d.championship.name,
-              championshipId: d.championship.id,
-              team1Name: d.team1?.name || 'Não definido',
-              team2Name: d.team2?.name || 'Não definido',
-              team1Id: d.team1?.id,
-              team2Id: d.team2?.id,
-              winner: d?.winner?.name ?? 'Indefinido',
-              status: statusFront[d.status as keyof typeof statusFront],
-            }));
-        } else {
-          // Sem filtro: mostrar apenas pendentes e jogando (não mostrar finalizadas)
-          frontData = data
-            ?.filter((d: any) => d.status !== 'finished')
-            .map((d: any) => ({
-              link: d.id,
-              championship: d.championship.name,
-              championshipId: d.championship.id,
-              team1Name: d.team1?.name || 'Não definido',
-              team2Name: d.team2?.name || 'Não definido',
-              team1Id: d.team1?.id,
-              team2Id: d.team2?.id,
-              winner: d?.winner?.name ?? 'Indefinido',
-              status: statusFront[d.status as keyof typeof statusFront],
-            }));
-        }
+        const matchesnow = data.matches;
+        setCount(data.count);
 
-        setMatches(frontData || []);
-        setTotalPages(Math.ceil((frontData?.length || 0) / 10));
-      } catch (error: any) {
-        toast.error(error.response.data.error);
+        console.log(data);
+
+        processMatches(matchesnow);
+      } catch (error: unknown) {
+        if (isAxiosError(error)) {
+          toast.error(error.response?.data?.error || 'Erro');
+        } else {
+          toast.error('Erro');
+        }
       } finally {
         setLoading(false);
       }
     }
+    getPlayingFinishedCount();
     getMatches();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter, page]);
+  }, [page]);
 
-  const config = [
-    {
-      key: 'link',
-      label: 'Partida',
-      element: 'link',
-      linkDirection: 'match',
-    },
-    {
-      key: 'championship',
-      label: 'Campeonato',
-      element: 'link',
-      content: true,
-      linkContent: 'championshipId',
-      linkDirection: 'championship',
-    },
-    {
-      key: 'team1Name',
-      label: 'Time 1',
-      element: 'link',
-      content: true,
-      linkDirection: 'team',
-      linkContent: 'team1Id',
-    },
-    {
-      key: 'team2Name',
-      label: 'Time 2',
-      element: 'link',
-      content: true,
-      linkDirection: 'team',
-      linkContent: 'team2Id',
-    },
-    {
-      key: 'winner',
-      label: 'Vencedor',
-      element: 'tr',
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      element: 'tr',
-    },
-  ];
+  // Cleanup do socket quando o componente desmonta
+  useEffect(() => {
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
+  }, []);
 
-  const generatePaginationButtons = () => {
-    const buttons = [];
-    const maxVisiblePages = 5;
-    const startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
-    const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+  // Inicializa o socket uma única vez
+  useEffect(() => {
+    // Cria a conexão socket apenas uma vez
+    if (!socketRef.current) {
+      socketRef.current = io('http://localhost:3333', {
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionAttempts: 5,
+      });
 
-    for (let i = startPage; i <= endPage; i++) {
-      buttons.push(
-        <PaginationButton
-          key={i}
-          onClick={() => setPage(i)}
-          className={page === i ? 'active' : ''}
-        >
-          {i}
-        </PaginationButton>
-      );
+      socketRef.current.on('connect', () => {
+        console.log('Socket conectado:', socketRef.current?.id);
+      });
+
+      socketRef.current.on('disconnect', () => {
+        console.log('Socket desconectado');
+      });
+
+      socketRef.current.on('connect_error', error => {
+        console.error('Erro na conexão socket:', error);
+      });
     }
 
+    const socket = socketRef.current;
+
+    // Função para atualizar as partidas quando receber evento do socket
+    const handleMatchesUpdate = async (data: {
+      playing: number;
+      finished: number;
+    }) => {
+      console.log('Dados recebidos do socket:', data);
+
+      // Atualiza os contadores
+      setPlayingCount(data.playing);
+      setFinishedCount(data.finished);
+
+      // Recarrega os dados completos das partidas
+      try {
+        const currentId = window.location.search.replace('?', '');
+        const endpoint = currentId
+          ? `/match?page=${page}&idChampionship=${currentId}`
+          : `/match?page=${page}&limit=12`;
+
+        const { data: matchesData } = await api.get(endpoint);
+        processMatches(matchesData.matches);
+      } catch (error) {
+        console.error('Erro ao atualizar partidas via socket:', error);
+      }
+    };
+
+    // Escuta o evento correto do backend
+    socket.on('matchesUpdated', handleMatchesUpdate);
+
+    // Cleanup: remove o listener quando o componente desmonta ou quando id/page mudam
+    return () => {
+      socket.off('matchesUpdated', handleMatchesUpdate);
+    };
+  }, [page, processMatches]);
+
+  const filteredData = useMemo(() => {
+    // Primeiro aplica filtro de status
+    let result = matches;
+    if (filter === 'finished') result = finished;
+    else if (filter === 'playing') result = playing;
+    else if (filter === 'pending') result = pending;
+
+    // Depois aplica busca (se houver)
+    if (search.trim()) {
+      const searchLower = search.toLowerCase();
+      result = result.filter(item => {
+        const championship = String(item.championship || '').toLowerCase();
+        const team1 = String(item.team1Name || '').toLowerCase();
+        const team2 = String(item.team2Name || '').toLowerCase();
+        return (
+          championship.includes(searchLower) ||
+          team1.includes(searchLower) ||
+          team2.includes(searchLower)
+        );
+      });
+    }
+
+    return result;
+  }, [matches, finished, playing, pending, filter, search]);
+
+  const totalPages = Math.ceil(count / 12);
+
+  const pagesButtons = () => {
+    const buttons = [];
+    for (let i = 1; i <= totalPages; i++) {
+      buttons.push(
+        <Button
+          key={i}
+          onClick={() => setPage(i)}
+          variant={page === i ? 'default' : 'outline'}
+          size='sm'
+        >
+          {i}
+        </Button>
+      );
+    }
     return buttons;
   };
+
   return (
-    <Container>
+    <section className='flex flex-col w-full px-10 py-8 gap-10'>
       {loading && <Loading fullscreen message='Carregando dados...' />}
 
-      <Title>Partidas</Title>
-      <PageHeader>
-        <FilterSelect
-          name='filter'
-          id='filter'
-          value={filter}
-          onChange={e => {
-            setFilter(e.target.value);
-            setPage(1); // Resetar página ao mudar filtro
-          }}
-        >
-          <option value=''>Todas as partidas</option>
-          <option value='pending'>Pendentes</option>
-          <option value='playing'>Jogando</option>
-          <option value='finished'>Finalizadas</option>
-        </FilterSelect>
-      </PageHeader>
+      <div className='max-w-[35%]'>
+        <h1 className='text-4xl font-bold my-2 text-foreground'>
+          Central de <span style={{ color: '#6a05f9' }}>Partidas</span>
+        </h1>
+        <p className='w-full text-muted-foreground'>
+          Acompanhe os resultados em tempo real e estatísticas detalhadas dos
+          maiores campeonatos do mundo.
+        </p>
+      </div>
 
-      <TableContainer>
-        <Table config={config} data={matches} />
-      </TableContainer>
+      <div className='flex w-full gap-8'>
+        <Card className='flex-1'>
+          <div className='flex items-center'>
+            <div className='mx-5 mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10'>
+              <CalendarDays className='h-5 w-5 text-blue-500' />
+            </div>
+            Partidas
+          </div>
+          <CardContent className='text-4xl'>{count}</CardContent>
+        </Card>
+        <Card className='flex-1'>
+          <div className='flex items-center'>
+            <div className='mx-5 mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-gold/10'>
+              <PlayCircle className='h-5 w-5 text-gold' />
+            </div>
+            Jogando agora
+          </div>
+          <CardContent className='text-4xl'>{playingCount}</CardContent>
+        </Card>
+        <Card className='flex-1'>
+          <div className='flex items-center'>
+            <div className='mx-5 mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10'>
+              <CheckCircle2 className='h-5 w-5 text-green-500' />
+            </div>
+            Finalizadas
+          </div>
+          <CardContent className='text-4xl'>{finishedCount}</CardContent>
+        </Card>
+      </div>
 
-      {totalPages > 1 && (
-        <PaginationContainer>
-          <PaginationButton
-            onClick={() => setPage(Math.max(1, page - 1))}
-            disabled={page === 1}
-          >
-            «
-          </PaginationButton>
-          {generatePaginationButtons()}
-          <PaginationButton
-            onClick={() => setPage(Math.min(totalPages, page + 1))}
-            disabled={page === totalPages}
-          >
-            »
-          </PaginationButton>
-        </PaginationContainer>
-      )}
-    </Container>
+      <div className='flex flex-col gap-2'>
+        <div className='w-full flex justify-between my-2 mt-7'>
+          <Field className='w-[32%]' orientation='horizontal'>
+            <Input
+              type='search'
+              placeholder='Busque por time ou campeonato'
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </Field>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant='outline'
+                className='border-input bg-transparent dark:bg-input/30'
+              >
+                <SlidersHorizontal className='h-4 w-4' />
+                <span className='text-sm flex items-center gap-2.5 max-md:text-xs'>
+                  Filtrar
+                </span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropDownContent
+              selectedFilter={filter}
+              setSelectedFilter={setFilter}
+            />
+          </DropdownMenu>
+        </div>
+        <div className='grid grid-cols-3 gap-10'>
+          {filteredData.map((data, index) => (
+            <MatchCard key={index} data={data} />
+          ))}
+        </div>
+      </div>
+
+      <div className='flex justify-end gap-2'>{pagesButtons()}</div>
+    </section>
   );
 }
