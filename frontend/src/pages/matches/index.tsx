@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import Loading from '../../components/loading';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -53,12 +53,16 @@ export default function Matches() {
   const [pending, setPending] = useState<FormattedMatch[]>([]);
   const [playing, setPlaying] = useState<FormattedMatch[]>([]);
   const [filter, setFilter] = useState('');
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchText, setSearchText] = useState('');
   const [search, setSearch] = useState('');
   const [count, setCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [playingCount, setPlayingCount] = useState(0);
   const [finishedCount, setFinishedCount] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [displayData, setDisplayData] = useState<FormattedMatch[]>([]);
   const socketRef = useRef<Socket | null>(null);
 
   const id = window.location.search.replace('?', '');
@@ -106,6 +110,31 @@ export default function Matches() {
     [formatMatch]
   );
 
+  async function getMatches() {
+    setLoading(true);
+    try {
+      const endpoint = id
+        ? `/match?page=${page}&idChampionship=${id}`
+        : `/match?page=${page}&limit=12`;
+
+      const { data } = await api.get(endpoint);
+
+      const matchesnow = data.matches;
+      setCount(data.pagination.totalCount);
+      setTotalPages(data.pagination.totalPages);
+
+      processMatches(matchesnow);
+    } catch (error: unknown) {
+      if (isAxiosError(error)) {
+        toast.error(error.response?.data?.error || 'Erro');
+      } else {
+        toast.error('Erro');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
     if (!localStorage.getItem('token') || !ctx.user) {
       if (!ctx.isLoggingOut) {
@@ -132,32 +161,6 @@ export default function Matches() {
             error.response?.data?.error ||
               'Erro ao pegar a contagem de partidas jogando e finalizadas'
           );
-        } else {
-          toast.error('Erro');
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    async function getMatches() {
-      setLoading(true);
-      try {
-        const endpoint = id
-          ? `/match?page=${page}&idChampionship=${id}`
-          : `/match?page=${page}&limit=12`;
-
-        const { data } = await api.get(endpoint);
-
-        const matchesnow = data.matches;
-        setCount(data.count);
-
-        console.log(data);
-
-        processMatches(matchesnow);
-      } catch (error: unknown) {
-        if (isAxiosError(error)) {
-          toast.error(error.response?.data?.error || 'Erro');
         } else {
           toast.error('Erro');
         }
@@ -211,8 +214,6 @@ export default function Matches() {
       playing: number;
       finished: number;
     }) => {
-      console.log('Dados recebidos do socket:', data);
-
       // Atualiza os contadores
       setPlayingCount(data.playing);
       setFinishedCount(data.finished);
@@ -240,49 +241,77 @@ export default function Matches() {
     };
   }, [page, processMatches]);
 
-  const filteredData = useMemo(() => {
-    // Primeiro aplica filtro de status
-    let result = matches;
-    if (filter === 'finished') result = finished;
-    else if (filter === 'playing') result = playing;
-    else if (filter === 'pending') result = pending;
+  useEffect(() => {
+    const filteredData = async () => {
+      // Depois aplica busca (se houver)
+      if (search.trim()) {
+        try {
+          const { data } = await api.get(`/match?search=${search}`);
+          if (data.matches && data.matches.length > 0) {
+            setTotalPages(data.pagination.totalPages);
+            // Processa as partidas e separa por status
+            processMatches(data.matches);
+            data.matches.map(formatMatch);
+          }
+        } catch (error) {
+          console.error('Erro ao buscar:', error);
+        }
+      } else if (search === '') {
+        getMatches();
+      }
+    };
+    filteredData();
+  }, [search, processMatches, formatMatch]);
 
-    // Depois aplica busca (se houver)
-    if (search.trim()) {
-      const searchLower = search.toLowerCase();
-      result = result.filter(item => {
-        const championship = String(item.championship || '').toLowerCase();
-        const team1 = String(item.team1Name || '').toLowerCase();
-        const team2 = String(item.team2Name || '').toLowerCase();
-        return (
-          championship.includes(searchLower) ||
-          team1.includes(searchLower) ||
-          team2.includes(searchLower)
-        );
-      });
+  useEffect(() => {
+    // Caso contrário, aplica o filtro nos dados locais que já foram separados por processMatches
+    if (filter === 'pending') {
+      setDisplayData(pending);
+    } else if (filter === 'playing') {
+      setDisplayData(playing);
+    } else if (filter === 'finished') {
+      setDisplayData(finished);
+    } else {
+      // Sem filtro, mostra todas as partidas
+      setDisplayData(matches);
     }
-
-    return result;
-  }, [matches, finished, playing, pending, filter, search]);
-
-  const totalPages = Math.ceil(count / 12);
+  }, [matches, finished, playing, pending, filter]);
 
   const pagesButtons = () => {
     const buttons = [];
-    for (let i = 1; i <= totalPages; i++) {
-      buttons.push(
-        <Button
-          key={i}
-          onClick={() => setPage(i)}
-          variant={page === i ? 'default' : 'outline'}
-          size='sm'
-        >
-          {i}
-        </Button>
-      );
+    if (displayData.length > 0) {
+      for (let i = 1; i <= totalPages; i++) {
+        buttons.push(
+          <Button
+            key={i}
+            onClick={() => setPage(i)}
+            variant={page === i ? 'default' : 'outline'}
+            size='sm'
+          >
+            {i}
+          </Button>
+        );
+      }
     }
     return buttons;
   };
+
+  function handleSearch(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.value === '') {
+      setSearch('');
+      setSearchText('');
+      setSearchLoading(false);
+      return;
+    }
+
+    setSearchLoading(true);
+    setSearchText(e.target.value);
+
+    setTimeout(() => {
+      setSearch(e.target.value);
+      setSearchLoading(false);
+    }, 2000);
+  }
 
   return (
     <section className='flex flex-col w-full px-10 py-8 gap-10'>
@@ -334,9 +363,15 @@ export default function Matches() {
             <Input
               type='search'
               placeholder='Busque por time ou campeonato'
-              value={search}
-              onChange={e => setSearch(e.target.value)}
+              value={searchText}
+              onChange={e => handleSearch(e)}
             />
+            {searchLoading && (
+              <Loading
+                size='sm'
+                className='bg-transparent border-0 shadow-none p-0'
+              />
+            )}
           </Field>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -356,11 +391,18 @@ export default function Matches() {
             />
           </DropdownMenu>
         </div>
-        <div className='grid grid-cols-3 gap-10'>
-          {filteredData.map((data, index) => (
-            <MatchCard key={index} data={data} />
-          ))}
-        </div>
+
+        {displayData.length > 0 ? (
+          <div className='grid grid-cols-3 gap-10'>
+            {displayData.map((data, index) => (
+              <MatchCard key={index} data={data} />
+            ))}
+          </div>
+        ) : (
+          <div className='flex justify-center'>
+            <h1 className='font-bold text-2xl'>Nenhuma partida encontrada</h1>
+          </div>
+        )}
       </div>
 
       <div className='flex justify-end gap-2'>{pagesButtons()}</div>

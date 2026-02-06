@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useEffect, useState, useMemo } from 'react';
 import api from '../../../services/axios';
@@ -164,7 +164,11 @@ export default function Match() {
       current.totalQuantity > prev.totalQuantity ? current : prev
     );
 
-    return best.gamer?.user?.name || null;
+    if (!best.gamer?.user?.name || !best.gamer?.user?.id) {
+      return null;
+    }
+
+    return { name: best.gamer.user.name, id: best.gamer.user.id };
   }, [metrics]);
 
   useEffect(() => {
@@ -404,7 +408,7 @@ export default function Match() {
       }
       toast.success('Métrica adicionada com sucesso!');
     } catch (error: any) {
-      toast.error(error.response?.data?.error);
+      toast.error(error.response?.data?.erro);
     } finally {
       setLoading(false);
     }
@@ -598,7 +602,17 @@ export default function Match() {
                   <span className='text-lg font-semibold'>
                     Melhor jogador da partida:{' '}
                     <span className='text-gold'>
-                      {bestPlayer || 'Ainda não definido'}
+                      {bestPlayer?.id ? (
+                        <Link
+                          to={`/user/${bestPlayer.id}`}
+                          className='relative inline-block group'
+                        >
+                          {bestPlayer.name}
+                          <span className='absolute bottom-0 left-0 h-0.5 bg-gold origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out w-full'></span>
+                        </Link>
+                      ) : (
+                        'Ainda não definido'
+                      )}
                     </span>
                   </span>
                 </div>
@@ -698,8 +712,26 @@ export default function Match() {
                   <SelectContent>
                     <SelectGroup>
                       {gamers.map(g => (
-                        <SelectItem key={g.id} value={String(g.id)}>
-                          {g?.user?.name}
+                        <SelectItem
+                          key={g.id}
+                          value={String(g.id)}
+                          className='flex items-center justify-between w-full'
+                        >
+                          <span>{g?.user?.name}</span>
+                          <span>-</span>
+                          <img
+                            src={`http://localhost:3333/team/${g?.team?.id}/logo`}
+                            alt={match[0].team1.name}
+                            onClick={() => navigate(`/team/${g?.team?.id}`)}
+                            className={cn(
+                              'w-10 h-10 object-cover rounded-xl cursor-pointer',
+                              'border-2 border-secondary shadow-md',
+                              'transition-transform hover:scale-105'
+                            )}
+                            onError={e => {
+                              e.currentTarget.src = withoutLogo;
+                            }}
+                          />
                         </SelectItem>
                       ))}
                     </SelectGroup>
@@ -724,26 +756,33 @@ export default function Match() {
                     className={cn(
                       'flex items-center gap-4 p-4',
                       'bg-card border border-border rounded-lg',
-                      'hover:border-primary transition-colors'
+                      'hover:border-primary transition-colors justify-between'
                     )}
                   >
-                    <span
-                      className={cn(
-                        'px-3 py-1 rounded-full text-sm font-semibold capitalize border',
-                        getMetricColor(m.type || '')
-                      )}
-                    >
-                      {m.type}
-                    </span>
-                    <span className='text-muted-foreground text-sm'>
-                      {m?.gamer?.user?.name}
-                    </span>
-                    <span className='text-primary font-bold'>
-                      x{m.quantity}
-                    </span>
-                    <span className='flex-1 text-foreground/80 text-sm'>
-                      {m.description}
-                    </span>
+                    <div className='flex items-center gap-2'>
+                      <span
+                        className={cn(
+                          'px-3 py-1 rounded-full text-sm font-semibold capitalize border',
+                          getMetricColor(m.type || '')
+                        )}
+                      >
+                        {m.type}
+                      </span>
+                      <span className='text-muted-foreground text-sm'>
+                        {m?.gamer?.user?.name}
+                      </span>
+                      <span className='text-primary font-bold'>
+                        x{m.quantity}
+                      </span>
+                      <span className='flex-1 text-foreground/80 text-sm'>
+                        {m.description}
+                      </span>
+                    </div>
+                    <div className='flex items-center gap-2'>
+                      <span className='text-muted-foreground text-sm'>
+                        {m.gamer?.team?.name}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>

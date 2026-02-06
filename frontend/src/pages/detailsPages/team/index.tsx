@@ -1,17 +1,10 @@
 import { useEffect, useState, useMemo } from 'react';
-import { cn } from '@/lib/utils';
 import { useParams } from 'react-router-dom';
 import api from '../../../services/axios';
 import { Table } from '../../../components/Table';
 import { toast } from 'sonner';
 import Loading from '../../../components/loading';
-import {
-  FaCheck,
-  FaEdit,
-  FaTimesCircle,
-  FaUserAlt,
-  FaWindowClose,
-} from 'react-icons/fa';
+import { FaCheck, FaTimesCircle, FaUserAlt } from 'react-icons/fa';
 import { formatMetricsForChart } from '../../../services/utils';
 import RadarChart from '../../../components/RadarChart';
 import FileInput from '../../../components/FileInput';
@@ -22,7 +15,9 @@ import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { isAxiosError } from 'axios';
 import { Card, CardContent } from '@/components/ui/card';
-import { Crown, Edit, PenSquare, Shield, Star } from 'lucide-react';
+import { Crown, Edit } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import withoutLogo from '@/assets/withoutLogo.png';
 
 export default function Team() {
   const { id } = useParams();
@@ -51,7 +46,6 @@ export default function Team() {
   const [isEditing, setIsEditing] = useState(false);
   const [teamMetrics, setTeamMetrics] = useState<Record<string, number>>({});
   const [logoLoading, setLogoLoading] = useState(true);
-  const [logoError, setLogoError] = useState(false);
   const { createNotifications } = useNotifications({ setLoading });
 
   const haveTeamIsgamer =
@@ -82,7 +76,6 @@ export default function Team() {
       if (!id) return;
       setLoading(true);
       setLogoLoading(true);
-      setLogoError(false);
       try {
         const { data } = await api.get(`team?id=${id}`);
         setTeam(data.teams[0]);
@@ -348,17 +341,25 @@ export default function Team() {
         </div>
 
         {/* Content */}
-        <div className='absolute bottom-0 left-0 right-0 p-10 flex flex-col md:flex-row items-end justify-between gap-8'>
+        <div className='absolute bottom-0 left-0 right-0 p-10 flex flex-col md:flex-row items-end justify-between'>
           <div className='flex items-center gap-8'>
-            <div className='w-32 h-32 border border-secondary rounded-3xl flex items-center justify-center shadow-secondary'>
+            <div className='relative w-32 h-32 border border-secondary rounded-3xl flex items-center justify-center shadow-secondary overflow-hidden'>
+              {logoLoading && (
+                <div className='h-full w-full absolute inset-0 flex items-center justify-center z-10 bg-background/50'>
+                  <Loading className='bg-transparent border-none' />
+                </div>
+              )}
               <img
-                className='rounded-3xl'
-                src={`http://localhost:3333/team/${team?.id}/logo`}
-                alt={`${team?.name} logo`}
+                src={`http://localhost:3333/team/${id}/logo`}
+                alt={`Logo do time ${name}`}
+                className={cn(
+                  'h-full w-full object-cover rounded-3xl transition-opacity duration-300',
+                  logoLoading ? 'opacity-0' : 'opacity-100'
+                )}
                 onLoad={() => setLogoLoading(false)}
-                onError={() => {
+                onError={e => {
+                  e.currentTarget.src = withoutLogo;
                   setLogoLoading(false);
-                  setLogoError(true);
                 }}
               />
             </div>

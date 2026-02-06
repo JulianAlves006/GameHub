@@ -28,10 +28,11 @@ export async function getTeamsHandler(
   page: number = 1,
   limit: number = 10,
   id: number,
-  idAdmin: number
+  idAdmin: number,
+  search: string | null = null
 ) {
   try {
-    const response = await getTeams(page, limit, id, idAdmin);
+    const response = await getTeams(page, limit, id, idAdmin, search);
 
     return response;
   } catch (error) {

@@ -71,9 +71,33 @@ export async function getTopGamers() {
 export async function getGamers(
   page: number = 1,
   limit: number = 10,
-  id: number | null = null
+  id: number | null = null,
+  search: string | null = null
 ) {
   const skip = (page - 1) * limit;
+
+  // Se houver busca, primeiro buscar TODOS os gamers para calcular posições
+  let allGamersRanked: Array<{ gamer: Gamer; score: number }> = [];
+  if (search) {
+    const allGamersQuery = gamerRepository
+      .createQueryBuilder('gamer')
+      .leftJoinAndSelect('gamer.user', 'user')
+      .leftJoinAndSelect('gamer.team', 'team')
+      .leftJoinAndSelect('gamer.metrics', 'metrics');
+
+    // Aplicar filtro por ID se fornecido
+    if (id) {
+      allGamersQuery.where('gamer.id = :id', { id });
+    }
+
+    const allGamersForRanking = await allGamersQuery.getMany();
+    allGamersRanked = allGamersForRanking
+      .map(gamer => ({
+        gamer,
+        score: gamer.score || 0,
+      }))
+      .sort((a, b) => b.score - a.score);
+  }
 
   // Criar query builder com relações
   let gamersQuery = gamerRepository
@@ -87,6 +111,19 @@ export async function getGamers(
     gamersQuery = gamersQuery.where('gamer.id = :id', { id });
   }
 
+  // Aplicar filtro de busca por nome se fornecido
+  if (search) {
+    if (id) {
+      gamersQuery = gamersQuery.andWhere('user.name LIKE :search', {
+        search: `${search}%`,
+      });
+    } else {
+      gamersQuery = gamersQuery.where('user.name LIKE :search', {
+        search: `${search}%`,
+      });
+    }
+  }
+
   // Buscar todos os gamers (antes da paginação para contar total)
   const allGamers = await gamersQuery.getMany();
 
@@ -94,6 +131,16 @@ export async function getGamers(
   const sortedGamers = allGamers.sort(
     (a, b) => (b.score || 0) - (a.score || 0)
   );
+
+  // Se houver busca, adicionar posição baseada no ranking completo
+  if (search && allGamersRanked.length > 0) {
+    sortedGamers.forEach(gamer => {
+      const position = allGamersRanked.findIndex(
+        ranked => ranked.gamer.id === gamer.id
+      );
+      (gamer as any).position = position >= 0 ? position + 1 : null;
+    });
+  }
 
   // Aplicar paginação
   const totalCount = sortedGamers.length;

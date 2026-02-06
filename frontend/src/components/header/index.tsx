@@ -111,12 +111,11 @@ export default function Header() {
           <NavLink to='/championships' active={isActive('/championships')}>
             Campeonatos
           </NavLink>
-          {((user?.gamers?.[0]?.score ?? 0) >= 50000 && !team) ||
-            (!teamAdmin && (
-              <NavLink to='/team' active={isActive('/team')}>
-                Criar time
-              </NavLink>
-            ))}
+          {(user?.gamers?.[0]?.score ?? 0) >= 50000 && !team && !teamAdmin && (
+            <NavLink to='/team' active={isActive('/team')}>
+              Criar time
+            </NavLink>
+          )}
         </div>
 
         {/* User Info */}

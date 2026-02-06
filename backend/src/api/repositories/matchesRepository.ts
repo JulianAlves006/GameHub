@@ -18,8 +18,57 @@ export async function getMatches(
   limit: number = 10,
   idChampionship: number,
   idMatch: number,
-  idTeam: number
+  idTeam: number,
+  search: string
 ) {
+  if (search) {
+    const skip = (page - 1) * limit;
+    const queryBuilder = matchRepository
+      .createQueryBuilder('match')
+      .leftJoinAndSelect('match.championship', 'championship')
+      .leftJoinAndSelect(
+        'championship.awardsChampionships',
+        'awardsChampionships'
+      )
+      .leftJoinAndSelect('awardsChampionships.award', 'award')
+      .leftJoinAndSelect(
+        'awardsChampionships.championship',
+        'awardChampionship'
+      )
+      .leftJoinAndSelect('championship.admin', 'admin')
+      .leftJoinAndSelect('match.team1', 'team1')
+      .leftJoinAndSelect('team1.gamers', 'team1Gamers')
+      .leftJoinAndSelect('team1Gamers.user', 'team1GamersUser')
+      .leftJoinAndSelect('match.team2', 'team2')
+      .leftJoinAndSelect('team2.gamers', 'team2Gamers')
+      .leftJoinAndSelect('team2Gamers.user', 'team2GamersUser')
+      .leftJoinAndSelect('match.winner', 'winner')
+      .leftJoinAndSelect('match.metrics', 'metrics')
+      .leftJoinAndSelect('metrics.gamer', 'metricsGamer')
+      .leftJoinAndSelect('metricsGamer.user', 'metricsGamerUser')
+      .where('championship.name LIKE :search', { search: `${search}%` })
+      .orWhere('team1.name LIKE :search', { search: `${search}%` })
+      .orWhere('team2.name LIKE :search', { search: `${search}%` })
+      .skip(skip)
+      .take(limit);
+
+    const [matches, count] = await queryBuilder.getManyAndCount();
+    const totalPages = Math.ceil(count / limit);
+    const hasNextPage = page < totalPages;
+    const hasPreviousPage = page > 1;
+
+    return {
+      matches,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount: count,
+        hasNextPage,
+        hasPreviousPage,
+        limit,
+      },
+    };
+  }
   if (idChampionship && !idMatch) {
     const skip = (page - 1) * limit;
     const [matches, count] = await matchRepository.findAndCount({
@@ -39,7 +88,21 @@ export async function getMatches(
         championship: { id: idChampionship },
       },
     });
-    return { matches, count };
+    const totalPages = Math.ceil(count / limit);
+    const hasNextPage = page < totalPages;
+    const hasPreviousPage = page > 1;
+
+    return {
+      matches,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount: count,
+        hasNextPage,
+        hasPreviousPage,
+        limit,
+      },
+    };
   }
   if (idMatch && !idChampionship) {
     const skip = (page - 1) * limit;
@@ -54,7 +117,7 @@ export async function getMatches(
         team1: { gamers: { user: true, team: true } },
         team2: { gamers: { user: true, team: true } },
         winner: true,
-        metrics: { gamer: { user: true } },
+        metrics: { gamer: { user: true, team: true } },
       },
       skip,
       take: limit,
@@ -62,7 +125,21 @@ export async function getMatches(
         id: idMatch,
       },
     });
-    return { matches, count };
+    const totalPages = Math.ceil(count / limit);
+    const hasNextPage = page < totalPages;
+    const hasPreviousPage = page > 1;
+
+    return {
+      matches,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount: count,
+        hasNextPage,
+        hasPreviousPage,
+        limit,
+      },
+    };
   }
   if (idMatch && idChampionship) {
     const skip = (page - 1) * limit;
@@ -86,7 +163,21 @@ export async function getMatches(
         id: idMatch,
       },
     });
-    return { matches, count };
+    const totalPages = Math.ceil(count / limit);
+    const hasNextPage = page < totalPages;
+    const hasPreviousPage = page > 1;
+
+    return {
+      matches,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount: count,
+        hasNextPage,
+        hasPreviousPage,
+        limit,
+      },
+    };
   }
   if (idTeam) {
     const skip = (page - 1) * limit;
@@ -107,7 +198,21 @@ export async function getMatches(
       take: limit,
       where: [{ team1: { id: idTeam } }, { team2: { id: idTeam } }],
     });
-    return { matches, count };
+    const totalPages = Math.ceil(count / limit);
+    const hasNextPage = page < totalPages;
+    const hasPreviousPage = page > 1;
+
+    return {
+      matches,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount: count,
+        hasNextPage,
+        hasPreviousPage,
+        limit,
+      },
+    };
   }
   const skip = (page - 1) * limit;
   const [matches, count] = await AppDataSource.getRepository(
@@ -125,7 +230,21 @@ export async function getMatches(
     skip,
     take: limit,
   });
-  return { matches, count };
+  const totalPages = Math.ceil(count / limit);
+  const hasNextPage = page < totalPages;
+  const hasPreviousPage = page > 1;
+
+  return {
+    matches,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalCount: count,
+      hasNextPage,
+      hasPreviousPage,
+      limit,
+    },
+  };
 }
 
 export async function createMatch(

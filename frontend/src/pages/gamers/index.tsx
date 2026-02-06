@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Loading from '../../components/loading';
 import { toast } from 'sonner';
 import { isAxiosError } from 'axios';
@@ -14,15 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import DropDownContent, { type FilterType } from './DropDownContent';
 import { Field } from '@/components/ui/field';
-import type { Gamer } from '@/types/types';
-
-interface Metric {
-  id: number;
-  quantity: number;
-  type: string;
-  description: string;
-  createdAt: string;
-}
+import type { Gamer, Metric } from '@/types/types';
 
 interface TopThree {
   topScorer: { id: number; name: string; score: number } | null;
@@ -35,16 +27,38 @@ interface FormattedGamer {
   userID: number | undefined;
   name: string;
   score: number;
-  metrics: Metric[];
+  metrics: Metric[] | undefined;
   teamID: number | null;
   team: string;
   shirtNumber: number;
+  position: number | undefined;
+}
+
+function formatGamers(gamers: Gamer[]): FormattedGamer[] {
+  const formatedGamers: FormattedGamer[] = gamers.map(
+    (gamer: Gamer & { position?: number }) => {
+      return {
+        id: gamer.id,
+        userID: gamer.user?.id,
+        name: gamer.user?.name || 'Nome não encontrado',
+        score: gamer.score || 0,
+        metrics: gamer.metrics || undefined,
+        teamID: gamer?.team?.id || null,
+        team: gamer?.team?.name || 'Nenhum time no momento',
+        shirtNumber: gamer.shirtNumber,
+        position: gamer.position,
+      };
+    }
+  );
+  return formatedGamers;
 }
 
 export default function Gamers() {
   const [loading, setLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [gamers, setGamers] = useState<FormattedGamer[]>([]);
   const [page, setPage] = useState(1);
+  const [searchText, setSearchText] = useState('');
   const [search, setSearch] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('score');
   const [topScorer, setTopScorer] = useState<{
@@ -74,13 +88,9 @@ export default function Gamers() {
     }, 0);
   };
 
-  // Filtra e ordena os gamers
+  // Ordena os gamers
   const filteredAndSortedGamers = useMemo(() => {
-    const filtered = gamers.filter(gamer =>
-      gamer.name.toLowerCase().includes(search.toLowerCase())
-    );
-
-    return filtered.sort((a, b) => {
+    return gamers.sort((a, b) => {
       switch (selectedFilter) {
         case 'score':
           return b.score - a.score;
@@ -94,14 +104,55 @@ export default function Gamers() {
         case 'cartao amarelo':
         case 'cartao vermelho':
           return (
-            getMetricTotal(b.metrics, selectedFilter) -
-            getMetricTotal(a.metrics, selectedFilter)
+            getMetricTotal((b.metrics || []) as Metric[], selectedFilter) -
+            getMetricTotal((a.metrics || []) as Metric[], selectedFilter)
           );
         default:
           return 0;
       }
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gamers, search, selectedFilter]);
+
+  useEffect(() => {
+    async function getSearchedGamers() {
+      try {
+        setLoading(true);
+        const { data } = await api.get(`/gamer?search=${search}`);
+
+        setTotalPages(data.pagination.totalPages);
+
+        const formatedGamers = formatGamers(data.gamers);
+
+        // Ordena por position antes de salvar (menor para maior, pois position é ranking)
+        const orderedGamers = formatedGamers.sort(
+          (a: FormattedGamer, b: FormattedGamer) => {
+            // Se ambos têm position, ordena por position
+            if (a.position !== undefined && b.position !== undefined) {
+              return a.position - b.position;
+            }
+            // Se apenas a tem position, a vem primeiro
+            if (a.position !== undefined) return -1;
+            // Se apenas b tem position, b vem primeiro
+            if (b.position !== undefined) return 1;
+            // Se nenhum tem position, ordena por score
+            return b.score - a.score;
+          }
+        );
+
+        setGamers(orderedGamers);
+      } catch (error: unknown) {
+        if (isAxiosError(error)) {
+          toast.error(error.response?.data?.error || 'Erro ao carregar gamers');
+        } else {
+          toast.error('Erro ao carregar gamers');
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+    getSearchedGamers();
+  }, [search]);
 
   // Busca gamers e calcula estatísticas
   useEffect(() => {
@@ -132,20 +183,14 @@ export default function Gamers() {
 
         setTotalPages(data.pagination.totalPages);
 
-        const formatedGamers = data.gamers.map((gamer: Gamer) => {
-          return {
-            id: gamer.id,
-            userID: gamer.user?.id,
-            name: gamer.user?.name || 'Nome não encontrado',
-            score: gamer.score || 0,
-            metrics: gamer.metrics,
-            teamID: gamer?.team?.id || null,
-            team: gamer?.team?.name || 'Nenhum time no momento',
-            shirtNumber: gamer.shirtNumber,
-          };
-        });
+        const formatedGamers = formatGamers(data.gamers);
 
-        setGamers(formatedGamers);
+        // Ordena por score antes de salvar (maior para menor)
+        const orderedGamers = formatedGamers.sort(
+          (a: FormattedGamer, b: FormattedGamer) => b.score - a.score
+        );
+
+        setGamers(orderedGamers);
       } catch (error: unknown) {
         if (isAxiosError(error)) {
           toast.error(error.response?.data?.error || 'Erro ao carregar gamers');
@@ -176,6 +221,23 @@ export default function Gamers() {
     }
     return buttons;
   };
+
+  function handleSearch(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.value === '') {
+      setSearch('');
+      setSearchText('');
+      setSearchLoading(false);
+      return;
+    }
+
+    setSearchLoading(true);
+    setSearchText(e.target.value);
+
+    setTimeout(() => {
+      setSearch(e.target.value);
+      setSearchLoading(false);
+    }, 2000);
+  }
 
   return (
     <section className='flex flex-col items-start gap-8 w-full min-h-screen px-10 py-8'>
@@ -244,9 +306,15 @@ export default function Gamers() {
             <Input
               type='search'
               placeholder='Busque por um jogador'
-              value={search}
-              onChange={e => setSearch(e.target.value)}
+              value={searchText}
+              onChange={e => handleSearch(e)}
             />
+            {searchLoading && (
+              <Loading
+                size='sm'
+                className='bg-transparent border-0 shadow-none p-0'
+              />
+            )}
           </Field>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -266,15 +334,22 @@ export default function Gamers() {
             />
           </DropdownMenu>
         </div>
-        {filteredAndSortedGamers.map((gamer, index) => (
-          <GamerCard
-            key={gamer.id}
-            data={gamer}
-            position={(page - 1) * 10 + index + 1}
-            metrics={gamer.metrics}
-            bestGamerID={topScorer?.id}
-          />
-        ))}
+        {filteredAndSortedGamers.map(gamer => {
+          // Mantém a posição original no ranking (não muda com o filtro)
+          const originalPosition =
+            search !== '' && gamer.position !== undefined
+              ? gamer.position
+              : gamers.findIndex(g => g.id === gamer.id) + 1 || 1;
+          return (
+            <GamerCard
+              key={gamer.id}
+              data={gamer}
+              position={(page - 1) * 10 + (originalPosition || 1)}
+              metrics={gamer.metrics}
+              bestGamerID={topScorer?.id}
+            />
+          );
+        })}
         {totalPages > 0 && (
           <div className='flex justify-end gap-2 mt-5'>{createButtons()}</div>
         )}

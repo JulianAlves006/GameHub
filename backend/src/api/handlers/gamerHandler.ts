@@ -30,10 +30,11 @@ export async function getTopGamersHandler() {
 export async function getGamersHandler(
   page: number = 1,
   limit: number = 10,
-  id: number | null = null
+  id: number | null = null,
+  search: string | null = null
 ) {
   try {
-    const response = await getGamers(page, limit, id);
+    const response = await getGamers(page, limit, id, search);
 
     return response;
   } catch (error) {

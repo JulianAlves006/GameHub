@@ -9,11 +9,15 @@ import api from '../../services/axios';
 import Loading from '../../components/loading';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
+import { formatCPF, validateCPF } from '@/services/utils';
+import { useApp } from '@/contexts/AppContext';
 
 export default function Register() {
+  const ctx = useApp();
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [cpf, setCpf] = useState('');
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
   const [loading, setLoading] = useState(false);
@@ -32,6 +36,12 @@ export default function Register() {
       toast.error('Email inválido');
     }
 
+    const cpfNumbers = cpf.replace(/\D/g, '');
+    if (cpfNumbers.length !== 11 || !validateCPF(cpf)) {
+      formErrors = true;
+      toast.error('CPF inválido');
+    }
+
     if (password.length < 6 || password.length > 50) {
       formErrors = true;
       toast.error('Senha deve ter entre 6 e 50 caracteres');
@@ -46,19 +56,19 @@ export default function Register() {
       const { data } = await api.post('/user', {
         name,
         email,
+        cpf: cpf.replace(/\D/g, ''),
         password,
         profile: 'gamer',
       });
       toast.success('Usuário criado com sucesso!');
-      localStorage.setItem('token', data.token);
+      ctx.setUser(data);
 
-      // Pequeno delay para garantir que o token seja processado
       setTimeout(() => {
         navigate('/gamer');
       }, 100);
     } catch (error: unknown) {
       if (isAxiosError(error)) {
-        const errors = error.response?.data?.error as
+        const errors = error.response?.data?.erro as
           | string[]
           | string
           | undefined;
@@ -104,6 +114,19 @@ export default function Register() {
             placeholder='Email'
             onChange={e => setEmail(e.target.value)}
             className='w-full'
+          />
+          <Input
+            type='text'
+            value={cpf}
+            placeholder='CPF'
+            onChange={e => {
+              const formatted = formatCPF(e.target.value);
+              if (formatted.replace(/\D/g, '').length <= 11) {
+                setCpf(formatted);
+              }
+            }}
+            className='w-full'
+            maxLength={14}
           />
           <Input
             type='password'

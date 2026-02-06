@@ -14,8 +14,9 @@ export async function getUserByEmail(email: any) {
   return user;
 }
 
-export async function createUser(user: any): Promise<User> {
-  const exist = await userRepository.findBy({ email: user.email });
+export async function createUser(user: User): Promise<User> {
+  const email: string = user.email;
+  const exist = await userRepository.findBy({ email });
   if (exist.length > 0) throw new Error('Email já cadastrado');
 
   const newUser = userRepository.create(user);

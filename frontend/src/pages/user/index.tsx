@@ -357,7 +357,7 @@ export default function User() {
 
       {loading && <Loading fullscreen message='Carregando dados...' />}
       <div className='w-full relative rounded-[32px] overflow-hidden bg-card border border-border mb-10'>
-        <div className='h-40 bg-gradient-to-r from-purple-600 via-blue-600 to-card dark:from-purple-900 dark:via-blue-900'></div>
+        <div className='h-40 bg-linear-to-r from-purple-600 via-blue-600 to-card dark:from-purple-900 dark:via-blue-900'></div>
         <div className='px-8 pb-8 flex flex-col md:flex-row items-start md:items-end justify-between gap-6 -mt-12'>
           <div className='flex flex-col md:flex-row items-center md:items-end gap-6'>
             <div className='w-32 h-32 rounded-3xl bg-muted border-4 border-card shadow-2xl overflow-hidden flex items-center justify-center group relative'>
@@ -386,7 +386,10 @@ export default function User() {
                       </div>
                       <div className='flex items-center gap-2 justify-center md:justify-start text-muted-foreground text-sm font-medium bg-muted/50 px-3 py-1 rounded-lg border border-border w-fit'>
                         <Star size={14} />
-                        <span>Score: {user.gamers?.[0]?.score}</span>
+                        <span>
+                          Score:{' '}
+                          {user.gamers?.[0]?.score.toLocaleString('pt-br')}
+                        </span>
                       </div>
                     </>
                   )}
@@ -405,7 +408,10 @@ export default function User() {
                       </div>
                       <div className='flex items-center gap-2 justify-center md:justify-start text-muted-foreground text-sm font-medium bg-muted/50 px-3 py-1 rounded-lg border border-border w-fit'>
                         <Star size={14} />
-                        <span>Score: {user.gamers?.[0]?.score}</span>
+                        <span>
+                          Score:{' '}
+                          {user.gamers?.[0]?.score.toLocaleString('pt-br')}
+                        </span>
                       </div>
                     </>
                   )}
@@ -440,9 +446,13 @@ export default function User() {
                 </button>
               </div>
             ) : (
-              <button className='p-3 bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground rounded-xl border border-border transition-colors'>
-                <Edit onClick={() => setIsEditing(true)} size={20} />
-              </button>
+              <>
+                {user?.id === accessUser?.id && (
+                  <button className='p-3 bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground rounded-xl border border-border transition-colors'>
+                    <Edit onClick={() => setIsEditing(true)} size={20} />
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>

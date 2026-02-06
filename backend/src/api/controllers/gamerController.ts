@@ -16,6 +16,7 @@ class GamerController {
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 10;
       const idGamer = req.query.id ? parseInt(req.query.id) : null;
+      const search = req.query.search || null;
 
       // Validar parâmetros
       if (page < 1) {
@@ -30,7 +31,8 @@ class GamerController {
       const response = await gamerHandler.getGamersHandler(
         page,
         limit,
-        idGamer as number | null
+        idGamer as number | null,
+        search as string | null
       );
       res.status(200).json(response);
     } catch (error: any) {

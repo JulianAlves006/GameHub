@@ -19,6 +19,7 @@ class MatchController {
       const idChampionship = parseInt(req.query.idChampionship) || undefined;
       const idMatch = parseInt(req.query.idMatch) || undefined;
       const idTeam = parseInt(req.query.idTeam) || undefined;
+      const search = req.query.search || undefined;
 
       // Validar parâmetros
       if (page < 1) {
@@ -34,7 +35,8 @@ class MatchController {
         limit,
         idChampionship as number,
         idMatch as number,
-        idTeam as number
+        idTeam as number,
+        search
       );
       res.status(200).json(response);
     } catch (error: any) {

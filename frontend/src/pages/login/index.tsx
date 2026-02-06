@@ -13,10 +13,10 @@ import { Button } from '../../components/ui/button';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const ctx = useApp();
+  const [email, setEmail] = useState(ctx.user?.email ?? '');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const ctx = useApp();
 
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

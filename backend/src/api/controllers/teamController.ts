@@ -42,6 +42,7 @@ class TeamController {
       const limit = parseInt(req.query.limit) || 10;
       const idTeam = parseInt(req.query.id) || null;
       const idAdmin = parseInt(req.query.idAdmin) || null;
+      const search = req.query.search || null;
 
       // Validar parâmetros
       if (page < 1) {
@@ -57,7 +58,8 @@ class TeamController {
         page,
         limit,
         idTeam as number,
-        idAdmin as number
+        idAdmin as number,
+        search as string | null
       );
       res.status(200).json(response);
     } catch (error: any) {

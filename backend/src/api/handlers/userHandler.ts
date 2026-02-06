@@ -36,9 +36,9 @@ export async function getUserHandler(id?: User['id']): Promise<User | User[]> {
   }
 }
 
-export async function createUserHandler(body: any) {
+export async function createUserHandler(body: User) {
   try {
-    const { name, email, password, profile } = body;
+    const { name, email, password, profile, cpf } = body;
     createUserValidation(body);
 
     const passwordHash = await argon2.hash(password, {
@@ -53,10 +53,11 @@ export async function createUserHandler(body: any) {
       email,
       password: passwordHash,
       profile,
+      cpf,
       isActive: 1,
     };
 
-    const newUser = await createUser(user);
+    const newUser = await createUser(user as User);
     await createLog(
       newUser.id,
       'CREATE_USER',

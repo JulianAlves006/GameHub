@@ -28,6 +28,9 @@ export class User {
   @Column({ type: 'varchar', length: 50 })
   profile!: string;
 
+  @Column({ type: 'varchar', length: 14 })
+  cpf!: string | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

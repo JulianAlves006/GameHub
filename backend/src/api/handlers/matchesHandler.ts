@@ -34,10 +34,18 @@ export async function getMatchesHandler(
   limit: number = 10,
   idChampionship: number,
   idMatch: number,
-  idTeam: number
+  idTeam: number,
+  search: string
 ) {
   try {
-    const response = getMatches(page, limit, idChampionship, idMatch, idTeam);
+    const response = getMatches(
+      page,
+      limit,
+      idChampionship,
+      idMatch,
+      idTeam,
+      search
+    );
     return response;
   } catch (error) {
     // eslint-disable-next-line no-console
