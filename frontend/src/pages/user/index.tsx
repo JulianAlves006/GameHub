@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { Table } from '../../components/Table';
 import { useNavigate, useParams } from 'react-router-dom';
 import Loading from '../../components/loading';
-import { FaCheck, FaUserAlt, FaTimesCircle } from 'react-icons/fa';
+import { FaCheck, FaTimesCircle, FaUserAlt } from 'react-icons/fa';
 import { isEmail } from 'validator';
 import { formatMetricsForChart } from '../../services/utils';
 import RadarChart from '../../components/RadarChart';
@@ -15,6 +15,7 @@ import { useApp } from '../../contexts/AppContext';
 import { type Team, type Championship, type Match } from '../../types/types';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
+import FileInput from '../../components/FileInput';
 import {
   ChevronRight,
   Crown,
@@ -25,6 +26,16 @@ import {
   Users,
   Star,
 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 type ChampionshipResponse = {
   championships: Championship[];
@@ -58,6 +69,9 @@ export default function User() {
   const [championships, setChampionships] = useState<Championship[]>([]);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const { createNotifications } = useNotifications({ setLoading });
 
   const [name, setName] = useState(user?.name || '');
@@ -69,6 +83,7 @@ export default function User() {
     show: boolean;
     teamInfo: Team | null;
   }>({ show: false, teamInfo: null });
+  const [openImage, setOpenImage] = useState(false);
 
   const chartData = useMemo(() => {
     if (!metrics) {
@@ -210,7 +225,7 @@ export default function User() {
     setLoading(true);
     try {
       const { data } = await api.get<ChampionshipResponse>(
-        `/championship?idAdmin=${user?.id}`
+        `/championship?idAdmin=${id ? id : user?.id}`
       );
       setChampionships(data.championships);
       const dataFormated = data.championships.map(d => d.matches).flat();
@@ -345,6 +360,60 @@ export default function User() {
     );
   }
 
+  async function handleEditImage() {
+    if (!selectedImage) {
+      toast.error('Por favor, selecione uma imagem');
+      return;
+    }
+
+    // Validar tamanho (5MB)
+    if (selectedImage.size > 5 * 1024 * 1024) {
+      toast.error('Arquivo muito grande. Tamanho máximo: 5MB');
+      return;
+    }
+
+    // Validar tipo
+    if (!selectedImage.type.startsWith('image/')) {
+      toast.error('Apenas imagens são permitidas');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const fd = new FormData();
+      fd.append('profilePicture', selectedImage as File);
+      fd.append('id', String(user?.id));
+      fd.append('name', name);
+      fd.append('email', email);
+
+      await api.put('/user', fd);
+      toast.success('Foto de perfil atualizada com sucesso!');
+      setOpenImage(false);
+      setSelectedImage(null);
+
+      // Resetar estados para recarregar a imagem
+      setImageLoading(true);
+      setImageError(false);
+
+      // Recarregar dados do usuário
+      if (user?.id) {
+        const { data } = await api.get(`/user?id=${user.id}`);
+        setUser(data[0]);
+        ctx.setUser(data[0]);
+      }
+    } catch (error: unknown) {
+      if (isAxiosError(error)) {
+        toast.error(
+          error.response?.data?.erro || 'Erro ao atualizar foto de perfil'
+        );
+      } else {
+        toast.error('Erro ao atualizar foto de perfil');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <section className='flex flex-col items-center w-full min-h-screen p-4'>
       {canInviteToTeam.show && (
@@ -360,8 +429,41 @@ export default function User() {
         <div className='h-40 bg-linear-to-r from-purple-600 via-blue-600 to-card dark:from-purple-900 dark:via-blue-900'></div>
         <div className='px-8 pb-8 flex flex-col md:flex-row items-start md:items-end justify-between gap-6 -mt-12'>
           <div className='flex flex-col md:flex-row items-center md:items-end gap-6'>
-            <div className='w-32 h-32 rounded-3xl bg-muted border-4 border-card shadow-2xl overflow-hidden flex items-center justify-center group relative'>
-              <FaUserAlt className='w-full h-full text-muted-foreground' />
+            <div className='w-32 h-32 rounded-3xl bg-muted border-4 border-card shadow-2xl overflow-hidden flex items-center justify-center group relative cursor-pointer hover:opacity-90 transition-opacity'>
+              {imageLoading && !imageError && (
+                <div className='h-full w-full absolute inset-0 flex items-center justify-center z-10 bg-background/50'>
+                  <Loading className='bg-transparent border-none' />
+                </div>
+              )}
+              {/* Ícone de edição no canto superior direito */}
+              <div className='absolute top-1 right-1 z-20 bg-primary text-primary-foreground rounded-full p-1.5 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity'>
+                <Edit onClick={() => setOpenImage(true)} size={14} />
+              </div>
+              {imageError ? (
+                <div
+                  className='h-full w-full flex items-center justify-center text-muted-foreground'
+                  onClick={() => setOpenImage(true)}
+                >
+                  <FaUserAlt size={48} />
+                </div>
+              ) : (
+                <img
+                  src={`http://localhost:3333/user/${id ? id : user?.id}/profilePicture`}
+                  alt={`Foto de perfil de ${name}`}
+                  className={cn(
+                    'h-full w-full object-cover rounded-3xl transition-opacity duration-300'
+                  )}
+                  onClick={() => setOpenImage(true)}
+                  onLoad={() => {
+                    setImageLoading(false);
+                    setImageError(false);
+                  }}
+                  onError={() => {
+                    setImageError(true);
+                    setImageLoading(false);
+                  }}
+                />
+              )}
             </div>
             <div className='text-center md:text-left mb-2'>
               <h1 className='text-3xl font-black text-card-foreground mb-1'>
@@ -576,6 +678,57 @@ export default function User() {
           )}
         </div>
       </div>
+      <AlertDialog open={openImage} onOpenChange={setOpenImage}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Quer alterar sua foto de perfil?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Selecione uma nova foto de perfil para substituir a atual.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className='flex flex-col gap-4 py-4'>
+            <FileInput
+              id='profilePictureDialog'
+              name='profilePictureDialog'
+              accept='image/*'
+              value={selectedImage}
+              onChange={setSelectedImage}
+              label='Foto de perfil'
+              placeholder='Selecionar foto de perfil'
+              maxSize={5}
+            />
+            {selectedImage && (
+              <div className='flex justify-center'>
+                <div className='relative w-48 h-48 rounded-lg overflow-hidden border border-border'>
+                  <img
+                    src={URL.createObjectURL(selectedImage)}
+                    alt='Preview da foto selecionada'
+                    className='w-full h-full object-cover'
+                    onLoad={e => {
+                      URL.revokeObjectURL((e.target as HTMLImageElement).src);
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setOpenImage(false);
+                setSelectedImage(null);
+              }}
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleEditImage}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 }

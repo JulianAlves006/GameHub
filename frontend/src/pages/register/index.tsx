@@ -11,6 +11,7 @@ import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { formatCPF, validateCPF } from '@/services/utils';
 import { useApp } from '@/contexts/AppContext';
+import FileInput from '@/components/FileInput';
 
 export default function Register() {
   const ctx = useApp();
@@ -20,6 +21,7 @@ export default function Register() {
   const [cpf, setCpf] = useState('');
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
+  const [profilePicture, setProfilePicture] = useState<File | null>();
   const [loading, setLoading] = useState(false);
 
   async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
@@ -53,13 +55,18 @@ export default function Register() {
     if (formErrors) return;
     setLoading(true);
     try {
-      const { data } = await api.post('/user', {
-        name,
-        email,
-        cpf: cpf.replace(/\D/g, ''),
-        password,
-        profile: 'gamer',
-      });
+      const fd = new FormData();
+      fd.append('name', name);
+      fd.append('email', email);
+      fd.append('cpf', cpf.replace(/\D/g, ''));
+      fd.append('password', password);
+      fd.append('profile', 'gamer');
+
+      if (profilePicture) {
+        fd.append('profilePicture', profilePicture);
+      }
+
+      const { data } = await api.post('/user', fd);
       toast.success('Usuário criado com sucesso!');
       ctx.setUser(data);
 
@@ -141,6 +148,16 @@ export default function Register() {
             placeholder='Confirmar senha'
             onChange={e => setPassword2(e.target.value)}
             className='w-full'
+          />
+          <FileInput
+            id='profilePicture'
+            name='profilePicture'
+            accept='image/*'
+            value={profilePicture}
+            onChange={setProfilePicture}
+            label='Foto de perfil'
+            placeholder='Selecionar foto de perfil'
+            maxSize={5}
           />
           <Button type='submit' className='w-full mt-2'>
             Cadastrar-se

@@ -4,7 +4,7 @@ import { Gamer, Team, User } from '../entities/index.ts';
 import { v4 as uuid } from 'uuid';
 
 const teamRepository = AppDataSource.getRepository(Team);
-const PREFIX = process.env.S3_PUBLIC_PREFIX || 'uploads/teams/';
+const PREFIX = process.env.S3_PUBLIC_PREFIX_TEAM;
 
 export async function getTeamLogo(id: number) {
   const team = await teamRepository.findOne({

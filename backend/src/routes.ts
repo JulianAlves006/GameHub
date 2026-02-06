@@ -31,8 +31,18 @@ routes.post('/login', loginController.login);
 
 //Rotas de usuários ---------------------------------------------------------------------------------------------------------------------------------------------------
 routes.get('/user', authMiddleware, UserController.getUser);
-routes.post('/user', UserController.createUser);
-routes.put('/user', authMiddleware, UserController.updateUser);
+routes.get('/user/:id/profilePicture', UserController.getUserProfilePicture);
+routes.post(
+  '/user',
+  upload.single('profilePicture'),
+  UserController.createUser
+);
+routes.put(
+  '/user',
+  upload.single('profilePicture'),
+  authMiddleware,
+  UserController.updateUser
+);
 routes.delete('/user', authMiddleware, UserController.deleteUser);
 
 //Rotas de gamers ---------------------------------------------------------------------------------------------------------------------------------------------------

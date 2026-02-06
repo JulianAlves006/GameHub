@@ -28,6 +28,8 @@ export default function Header() {
   const { getNotifications } = useNotifications({ setLoading });
   const [teamAdmin, setTeamAdmin] = useState<Team>();
   const gamerId = user?.gamers?.[0]?.id;
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     getNotifications();
@@ -171,7 +173,39 @@ export default function Header() {
                 >
                   <span className='text-sm flex items-center gap-2.5 max-md:text-xs'>
                     {user?.name}
-                    <FaUserAlt size={14} />
+                    <div className='relative w-8 h-8 rounded-full overflow-hidden border-2 border-border shrink-0 max-md:w-6 max-md:h-6'>
+                      {imageLoading && !imageError && (
+                        <div className='absolute inset-0 flex items-center justify-center bg-muted'>
+                          <div className='w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin max-md:w-3 max-md:h-3' />
+                        </div>
+                      )}
+                      {imageError ? (
+                        <div className='w-full h-full flex items-center justify-center text-muted-foreground bg-muted'>
+                          <FaUserAlt
+                            size={12}
+                            className='max-md:w-3 max-md:h-3'
+                          />
+                        </div>
+                      ) : (
+                        <img
+                          src={`http://localhost:3333/user/${user?.id}/profilePicture`}
+                          alt={`Foto de perfil de ${user?.name}`}
+                          className={cn(
+                            'w-full h-full object-cover transition-opacity duration-300',
+                            imageLoading ? 'opacity-0' : 'opacity-100'
+                          )}
+                          onClick={() => navigate(`/user/${user?.id}`)}
+                          onLoad={() => {
+                            setImageLoading(false);
+                            setImageError(false);
+                          }}
+                          onError={() => {
+                            setImageError(true);
+                            setImageLoading(false);
+                          }}
+                        />
+                      )}
+                    </div>
                   </span>
                 </Button>
               </DropdownMenuTrigger>
