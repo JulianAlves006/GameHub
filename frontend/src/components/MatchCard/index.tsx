@@ -115,7 +115,7 @@ export default function MatchCard({ data, className }: MatchCardProps) {
                 </div>
               )}
               <img
-                src={`http://localhost:3333/team/${data.team1Id}/logo`}
+                src={`https://gamehub-mcq4.onrender.com/team/${data.team1Id}/logo`}
                 alt={`Logo do time ${data.team1Name}`}
                 className={cn(
                   'h-full w-full object-cover transition-opacity duration-300',
@@ -151,7 +151,7 @@ export default function MatchCard({ data, className }: MatchCardProps) {
                 </div>
               )}
               <img
-                src={`http://localhost:3333/team/${data.team2Id}/logo`}
+                src={`https://gamehub-mcq4.onrender.com/team/${data.team2Id}/logo`}
                 alt={`Logo do time ${data.team2Name}`}
                 className={cn(
                   'h-full w-full object-cover transition-opacity duration-300',

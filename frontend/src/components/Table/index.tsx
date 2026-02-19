@@ -131,7 +131,7 @@ export const Table = ({
                               ? 'opacity-100'
                               : 'opacity-0'
                           )}
-                          src={`http://localhost:3333/team/${d.id}/logo`}
+                          src={`https://gamehub-mcq4.onrender.com/team/${d.id}/logo`}
                           alt={`${d.name} logo`}
                           onLoad={() => handleImageLoad(d.id as number)}
                           onError={e => {

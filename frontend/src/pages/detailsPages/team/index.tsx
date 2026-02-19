@@ -352,7 +352,7 @@ export default function Team() {
                 </div>
               )}
               <img
-                src={`http://localhost:3333/team/${id}/logo`}
+                src={`https://gamehub-mcq4.onrender.com/team/${id}/logo`}
                 alt={`Logo do time ${name}`}
                 className={cn(
                   'h-full w-full object-cover rounded-3xl transition-opacity duration-300',
@@ -484,7 +484,7 @@ export default function Team() {
                       </div>
                     ) : (
                       <img
-                        src={`http://localhost:3333/user/${team?.gamer?.user?.id}/profilePicture`}
+                        src={`https://gamehub-mcq4.onrender.com/user/${team?.gamer?.user?.id}/profilePicture`}
                         alt={`Foto de perfil de ${team?.gamer?.user?.name || 'Responsável'}`}
                         className={cn(
                           'w-full h-full object-cover transition-opacity duration-300',

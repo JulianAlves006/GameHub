@@ -448,7 +448,7 @@ export default function User() {
                 </div>
               ) : (
                 <img
-                  src={`http://localhost:3333/user/${id ? id : user?.id}/profilePicture`}
+                  src={`https://gamehub-mcq4.onrender.com/user/${id ? id : user?.id}/profilePicture`}
                   alt={`Foto de perfil de ${name}`}
                   className={cn(
                     'h-full w-full object-cover rounded-3xl transition-opacity duration-300'

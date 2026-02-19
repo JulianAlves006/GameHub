@@ -107,7 +107,7 @@ export function TeamCard({
           </div>
         )}
         <img
-          src={`http://localhost:3333/team/${id}/logo`}
+          src={`https://gamehub-mcq4.onrender.com/team/${id}/logo`}
           alt={`Logo do time ${name}`}
           className={cn(
             'h-full w-full object-cover transition-opacity duration-300',
