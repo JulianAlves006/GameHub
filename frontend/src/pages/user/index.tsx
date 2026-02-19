@@ -466,58 +466,69 @@ export default function User() {
               )}
             </div>
             <div className='text-center md:text-left mb-2'>
-              <h1 className='text-3xl font-black text-card-foreground mb-1'>
-                {name}
-              </h1>
               {isEditing ? (
-                <div className='flex gap-3'>
-                  <div className='flex items-center gap-2 justify-center md:justify-start text-muted-foreground text-sm font-medium bg-muted/50 px-3 py-1 rounded-lg border border-border w-fit'>
-                    <Mail size={14} />
-                    <Input
-                      type='email'
-                      value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      className='bg-transparent border-none p-0 h-auto text-muted-foreground text-sm font-medium focus-visible:ring-0 focus-visible:ring-offset-0 w-fit min-w-[200px]'
-                    />
+                <>
+                  <Input
+                    type='text'
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    className='text-3xl! font-black text-card-foreground mb-1 bg-transparent w-fit border-none p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0'
+                  />
+                  <div className='flex gap-3'>
+                    <div className='flex items-center gap-2 justify-center md:justify-start text-muted-foreground text-sm font-medium bg-muted/50 px-3 py-1 rounded-lg border border-border w-fit'>
+                      <Mail size={14} />
+                      <Input
+                        type='email'
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                        className='bg-transparent border-none p-0 h-auto text-muted-foreground text-sm font-medium focus-visible:ring-0 focus-visible:ring-offset-0 w-fit min-w-[200px]'
+                      />
+                    </div>
+                    {user?.profile === 'gamer' && user?.gamers?.[0]?.team && (
+                      <>
+                        <div className='flex items-center gap-2 justify-center md:justify-start text-muted-foreground text-sm font-medium bg-muted/50 px-3 py-1 rounded-lg border border-border w-fit'>
+                          <Users size={14} />
+                          <span>Time: {user.gamers?.[0]?.team?.name}</span>
+                        </div>
+                        <div className='flex items-center gap-2 justify-center md:justify-start text-muted-foreground text-sm font-medium bg-muted/50 px-3 py-1 rounded-lg border border-border w-fit'>
+                          <Star size={14} />
+                          <span>
+                            Score:{' '}
+                            {user.gamers?.[0]?.score.toLocaleString('pt-br')}
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
-                  {user?.profile === 'gamer' && user?.gamers?.[0]?.team && (
-                    <>
-                      <div className='flex items-center gap-2 justify-center md:justify-start text-muted-foreground text-sm font-medium bg-muted/50 px-3 py-1 rounded-lg border border-border w-fit'>
-                        <Users size={14} />
-                        <span>Time: {user.gamers?.[0]?.team?.name}</span>
-                      </div>
-                      <div className='flex items-center gap-2 justify-center md:justify-start text-muted-foreground text-sm font-medium bg-muted/50 px-3 py-1 rounded-lg border border-border w-fit'>
-                        <Star size={14} />
-                        <span>
-                          Score:{' '}
-                          {user.gamers?.[0]?.score.toLocaleString('pt-br')}
-                        </span>
-                      </div>
-                    </>
-                  )}
-                </div>
+                </>
               ) : (
-                <div className='flex gap-3'>
-                  <div className='flex items-center gap-2 justify-center md:justify-start text-muted-foreground text-sm font-medium bg-muted/50 px-3 py-1 rounded-lg border border-border w-fit'>
-                    <Mail size={14} />
-                    <span>{email}</span>
+                <>
+                  <h1 className='text-3xl font-black text-card-foreground mb-1'>
+                    {name}
+                  </h1>
+
+                  <div className='flex gap-3'>
+                    <div className='flex items-center gap-2 justify-center md:justify-start text-muted-foreground text-sm font-medium bg-muted/50 px-3 py-1 rounded-lg border border-border w-fit'>
+                      <Mail size={14} />
+                      <span>{email}</span>
+                    </div>
+                    {user?.profile === 'gamer' && user?.gamers?.[0]?.team && (
+                      <>
+                        <div className='flex items-center gap-2 justify-center md:justify-start text-muted-foreground text-sm font-medium bg-muted/50 px-3 py-1 rounded-lg border border-border w-fit'>
+                          <Users size={14} />
+                          <span>Time: {user.gamers?.[0]?.team?.name}</span>
+                        </div>
+                        <div className='flex items-center gap-2 justify-center md:justify-start text-muted-foreground text-sm font-medium bg-muted/50 px-3 py-1 rounded-lg border border-border w-fit'>
+                          <Star size={14} />
+                          <span>
+                            Score:{' '}
+                            {user.gamers?.[0]?.score.toLocaleString('pt-br')}
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
-                  {user?.profile === 'gamer' && user?.gamers?.[0]?.team && (
-                    <>
-                      <div className='flex items-center gap-2 justify-center md:justify-start text-muted-foreground text-sm font-medium bg-muted/50 px-3 py-1 rounded-lg border border-border w-fit'>
-                        <Users size={14} />
-                        <span>Time: {user.gamers?.[0]?.team?.name}</span>
-                      </div>
-                      <div className='flex items-center gap-2 justify-center md:justify-start text-muted-foreground text-sm font-medium bg-muted/50 px-3 py-1 rounded-lg border border-border w-fit'>
-                        <Star size={14} />
-                        <span>
-                          Score:{' '}
-                          {user.gamers?.[0]?.score.toLocaleString('pt-br')}
-                        </span>
-                      </div>
-                    </>
-                  )}
-                </div>
+                </>
               )}
             </div>
           </div>
