@@ -53,7 +53,7 @@ export async function createUser(
 }
 
 export async function updateUser(
-  newUser: User,
+  newUser: Partial<User> & { id: number },
   profilePicture: Buffer | null = null,
   contentType: string | null = null
 ) {

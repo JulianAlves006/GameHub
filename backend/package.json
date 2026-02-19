@@ -10,8 +10,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "dev": "tsx watch src/server.ts",
-    "build": "npm install",
-    "start": "tsx src/server.ts"
+    "build": "tsc",
+    "start": "npm run build && tsx src/server.ts"
   },
   "keywords": [],
   "author": "",

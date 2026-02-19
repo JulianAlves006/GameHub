@@ -89,7 +89,7 @@ export async function updateUserHandler(
   try {
     const { id, name, email, password } = body;
     updateUserValidation(body);
-    let newUser;
+    let newUser: Partial<User> & { id: number };
     if (password) {
       const passwordHash = await argon2.hash(password, {
         type: argon2.argon2id,
