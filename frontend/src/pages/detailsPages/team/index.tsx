@@ -38,10 +38,8 @@ export default function Team() {
       status: string;
     }[]
   >([]);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [filter, setFilter] = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [page, setPage] = useState(1);
+  const [filter] = useState('');
+  const [page] = useState(1);
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState('');
   const [logo, setLogo] = useState<File | null>(null);

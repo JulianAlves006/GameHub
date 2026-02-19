@@ -2,7 +2,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3333',
+  baseURL: 'https://gamehub-mcq4.onrender.com',
 });
 
 // Interceptor para adicionar token automaticamente

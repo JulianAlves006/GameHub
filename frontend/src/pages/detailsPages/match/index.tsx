@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import api from '../../../services/axios';
 import { toast } from 'sonner';
 import Loading from '../../../components/loading';
-import { FaTrashAlt, FaCheck } from 'react-icons/fa';
+import { FaTrashAlt } from 'react-icons/fa';
 import { addScore } from '../../../services/utils';
 import { useApp } from '../../../contexts/AppContext';
 import {
