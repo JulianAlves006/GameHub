@@ -8,7 +8,7 @@ import { Server } from 'socket.io';
 
 const app = express();
 const httpServer = createServer(app);
-const PORT = 3333;
+const PORT = process.env.PORT || 3333;
 
 AppDataSource.initialize()
   .then(() => {
