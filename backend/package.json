@@ -10,7 +10,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "dev": "tsx watch src/server.ts",
-    "build": "echo \"No build step required\"",
+    "build": "npm install",
     "start": "tsx src/server.ts"
   },
   "keywords": [],
