@@ -173,4 +173,4 @@ O projeto inclui `render.yaml` para deploy do **backend** na [Render](https://re
 
 ## Licença
 
-ISC
+MIT
