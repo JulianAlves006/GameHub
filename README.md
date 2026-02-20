@@ -92,12 +92,9 @@ npm run install:all
 
 3. Configure as variáveis de ambiente (veja [Variáveis de ambiente](#variáveis-de-ambiente)).
 
-4. Crie o banco MySQL e rode as migrations (a partir da pasta `backend`):
+4. Crie o banco MySQL (a partir da pasta `backend`):
 
-```bash
-cd backend
-npx typeorm migration:run -d src/data-source.ts
-```
+  Dentro da pasta `backend` -> `database`, teremos o arquivo `gameHub.sql` para criação do banco em sua maquina 
 
 5. Inicie backend e frontend (em terminais separados):
 
