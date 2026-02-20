@@ -157,7 +157,7 @@ export default function Championship() {
                     {m.team1 && (
                       <div className='flex items-center gap-3 flex-1 min-w-0'>
                         <img
-                          src={`https://gamehub-mcq4.onrender.com/team/${m.team1.id}/logo`}
+                          src={`${ctx.apiURL}/team/${m.team1.id}/logo`}
                           alt={`${m.team1.name} logo`}
                           onError={e => {
                             e.currentTarget.src = withoutLogo;
@@ -191,7 +191,7 @@ export default function Championship() {
                     {m.team2 && (
                       <div className='flex items-center gap-3 flex-1 min-w-0 flex-row-reverse text-right'>
                         <img
-                          src={`https://gamehub-mcq4.onrender.com/team/${m.team2.id}/logo`}
+                          src={`${ctx.apiURL}/team/${m.team2.id}/logo`}
                           alt={`${m.team2.name} logo`}
                           onError={e => {
                             e.currentTarget.src = withoutLogo;

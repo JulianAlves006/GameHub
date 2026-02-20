@@ -132,7 +132,7 @@ export default function Header() {
             {team && (
               <img
                 onClick={() => navigate(`/team/${team.id}`)}
-                src={`https://gamehub-mcq4.onrender.com/team/${(team as Team).id}/logo`}
+                src={`${ctx.ctx.apiURL}/team/${(team as Team).id}/logo`}
                 alt={`${(team as Team).name} logo`}
                 onError={e => {
                   e.currentTarget.src = withoutLogo;
@@ -148,7 +148,7 @@ export default function Header() {
             {teamAdmin && !team && (
               <img
                 onClick={() => navigate(`/team/${teamAdmin.id}`)}
-                src={`https://gamehub-mcq4.onrender.com/team/${teamAdmin.id}/logo`}
+                src={`${ctx.apiURL}/team/${teamAdmin.id}/logo`}
                 alt={`${teamAdmin.name} logo`}
                 onError={e => {
                   e.currentTarget.src = withoutLogo;
@@ -188,7 +188,7 @@ export default function Header() {
                         </div>
                       ) : (
                         <img
-                          src={`https://gamehub-mcq4.onrender.com/user/${user?.id}/profilePicture`}
+                          src={`${ctx.apiURL}/user/${user?.id}/profilePicture`}
                           alt={`Foto de perfil de ${user?.name}`}
                           className={cn(
                             'w-full h-full object-cover transition-opacity duration-300',

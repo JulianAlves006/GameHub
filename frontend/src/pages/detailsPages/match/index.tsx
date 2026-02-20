@@ -501,7 +501,7 @@ export default function Match() {
                     <div className='flex items-center'>
                       {match[0].team1.logo && (
                         <img
-                          src={`https://gamehub-mcq4.onrender.com/team/${match[0].team1.id}/logo`}
+                          src={`${ctx.apiURL}/team/${match[0].team1.id}/logo`}
                           alt={match[0].team1.name}
                           onClick={() =>
                             navigate(`/team/${match[0].team1?.id}`)
@@ -548,7 +548,7 @@ export default function Match() {
                     <div className='flex flex-row-reverse items-center'>
                       {match[0].team2.logo && (
                         <img
-                          src={`https://gamehub-mcq4.onrender.com/team/${match[0].team2.id}/logo`}
+                          src={`${ctx.apiURL}/team/${match[0].team2.id}/logo`}
                           alt={match[0].team2.name}
                           onClick={() =>
                             navigate(`/team/${match[0].team2?.id}`)
@@ -618,7 +618,7 @@ export default function Match() {
                 </div>
                 {match[0]?.winner?.id && (
                   <img
-                    src={`https://gamehub-mcq4.onrender.com/team/${match[0].winner.id}/logo`}
+                    src={`${ctx.apiURL}/team/${match[0].winner.id}/logo`}
                     alt={winner}
                     className={cn(
                       'w-24 h-24 object-cover rounded-xl',
@@ -720,7 +720,7 @@ export default function Match() {
                           <span>{g?.user?.name}</span>
                           <span>-</span>
                           <img
-                            src={`https://gamehub-mcq4.onrender.com/team/${g?.team?.id}/logo`}
+                            src={`${ctx.apiURL}/team/${g?.team?.id}/logo`}
                             alt={match[0].team1.name}
                             onClick={() => navigate(`/team/${g?.team?.id}`)}
                             className={cn(

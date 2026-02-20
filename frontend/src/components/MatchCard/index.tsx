@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import Loading from '../loading';
 import withoutLogo from '../../assets/withoutLogo.png';
 import { useMemo, useState } from 'react';
+import { useApp } from '@/contexts/AppContext';
 
 type MatchCardProps = {
   data: {
@@ -32,6 +33,7 @@ type MatchCardProps = {
 
 export default function MatchCard({ data, className }: MatchCardProps) {
   const navigate = useNavigate();
+  const ctx = useApp();
   const [imageLoading, setImageLoading] = useState(true);
 
   const getStatusColor = (status: string) => {
@@ -115,7 +117,7 @@ export default function MatchCard({ data, className }: MatchCardProps) {
                 </div>
               )}
               <img
-                src={`https://gamehub-mcq4.onrender.com/team/${data.team1Id}/logo`}
+                src={`${ctx.apiURL}/team/${data.team1Id}/logo`}
                 alt={`Logo do time ${data.team1Name}`}
                 className={cn(
                   'h-full w-full object-cover transition-opacity duration-300',
@@ -151,7 +153,7 @@ export default function MatchCard({ data, className }: MatchCardProps) {
                 </div>
               )}
               <img
-                src={`https://gamehub-mcq4.onrender.com/team/${data.team2Id}/logo`}
+                src={`${ctx.apiURL}/team/${data.team2Id}/logo`}
                 alt={`Logo do time ${data.team2Name}`}
                 className={cn(
                   'h-full w-full object-cover transition-opacity duration-300',

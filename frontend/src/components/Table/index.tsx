@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useApp } from '@/contexts/AppContext';
 
 interface Config {
   key: string;
@@ -38,6 +39,7 @@ export const Table = ({
   itemsPerPage = 10,
 }: TableProps) => {
   const navigate = useNavigate();
+  const ctx = useApp();
   const [loadingImages, setLoadingImages] = useState<Record<number, boolean>>(
     {}
   );
@@ -131,7 +133,7 @@ export const Table = ({
                               ? 'opacity-100'
                               : 'opacity-0'
                           )}
-                          src={`https://gamehub-mcq4.onrender.com/team/${d.id}/logo`}
+                          src={`${ctx.apiURL}/team/${d.id}/logo`}
                           alt={`${d.name} logo`}
                           onLoad={() => handleImageLoad(d.id as number)}
                           onError={e => {

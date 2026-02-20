@@ -187,7 +187,7 @@ export default function Matches() {
   useEffect(() => {
     // Cria a conexão socket apenas uma vez
     if (!socketRef.current) {
-      socketRef.current = io('https://gamehub-mcq4.onrender.com', {
+      socketRef.current = io(ctx.apiURL, {
         transports: ['websocket', 'polling'],
         reconnection: true,
         reconnectionDelay: 1000,

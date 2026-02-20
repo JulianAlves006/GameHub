@@ -7,6 +7,7 @@ type AppContextValue = {
   setUser: (user: User | null) => void;
   logout: () => void;
   isLoggingOut: boolean;
+  apiURL: string;
 };
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
@@ -23,6 +24,7 @@ export function AppProvider({ children }: AppProviderProps) {
     return savedUser ? JSON.parse(savedUser) : null;
   });
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const apiURL = import.meta.env.VITE_API_URL;
 
   // Salva no localStorage sempre que o user mudar
   useEffect(() => {
@@ -53,6 +55,7 @@ export function AppProvider({ children }: AppProviderProps) {
     setUser,
     logout,
     isLoggingOut,
+    apiURL,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

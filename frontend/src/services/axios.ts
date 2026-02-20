@@ -2,10 +2,9 @@ import axios from 'axios';
 import { toast } from 'sonner';
 
 const api = axios.create({
-  baseURL: 'https://gamehub-mcq4.onrender.com',
+  baseURL: import.meta.env.VITE_API_URL,
 });
 
-// Interceptor para adicionar token automaticamente
 api.interceptors.request.use(
   async config => {
     const token = localStorage.getItem('token');
@@ -19,14 +18,12 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor para tratar respostas
 api.interceptors.response.use(
   response => response,
   error => {
     const status = error.response ? error.response.status : null;
 
     if (status === 401) {
-      // Evita múltiplos toasts de erro
       const lastError = localStorage.getItem('lastErrorTime');
       const now = Date.now();
 

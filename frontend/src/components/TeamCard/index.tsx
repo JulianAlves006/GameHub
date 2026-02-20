@@ -4,7 +4,7 @@ import { Trophy, Medal, Award, TrendingUp, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import withoutLogo from '../../assets/withoutLogo.png';
 import Loading from '../loading';
-
+import { useApp } from '@/contexts/AppContext';
 interface TeamCardProps {
   id: number;
   position: number;
@@ -53,6 +53,7 @@ export function TeamCard({
   isTopThree = false,
 }: TeamCardProps) {
   const navigate = useNavigate();
+  const ctx = useApp();
   const [imageLoading, setImageLoading] = useState(true);
 
   const handleClick = () => {
@@ -107,7 +108,7 @@ export function TeamCard({
           </div>
         )}
         <img
-          src={`https://gamehub-mcq4.onrender.com/team/${id}/logo`}
+          src={`${ctx.apiURL}/team/${id}/logo`}
           alt={`Logo do time ${name}`}
           className={cn(
             'h-full w-full object-cover transition-opacity duration-300',
