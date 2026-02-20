@@ -1,4 +1,5 @@
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
+import { isAxiosError } from 'axios';
 import api from './axios';
 
 export function formatDateFullText(dateStr: string) {
@@ -121,9 +122,44 @@ export async function addScore(score: number, gamer: number) {
       score,
     });
     toast.success('Score adicionado com sucesso!');
-  } catch (error: any) {
-    toast.error(
-      error?.response?.data?.error || 'Falha ao marcar notificações como lidas'
-    );
+  } catch (error: unknown) {
+    if (isAxiosError(error)) {
+      toast.error(error.response?.data?.error || 'Falha ao adicionar score');
+    } else {
+      toast.error('Falha ao adicionar score');
+    }
   }
+}
+
+export function formatCPF(value: string): string {
+  const numbers = value.replace(/\D/g, '');
+  if (numbers.length <= 3) return numbers;
+  if (numbers.length <= 6) return `${numbers.slice(0, 3)}.${numbers.slice(3)}`;
+  if (numbers.length <= 9)
+    return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6)}`;
+  return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6, 9)}-${numbers.slice(9, 11)}`;
+}
+
+export function validateCPF(cpfValue: string): boolean {
+  const numbers = cpfValue.replace(/\D/g, '');
+  if (numbers.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(numbers)) return false;
+
+  let sum = 0;
+  for (let i = 0; i < 9; i++) {
+    sum += parseInt(numbers.charAt(i)) * (10 - i);
+  }
+  let digit = 11 - (sum % 11);
+  if (digit >= 10) digit = 0;
+  if (digit !== parseInt(numbers.charAt(9))) return false;
+
+  sum = 0;
+  for (let i = 0; i < 10; i++) {
+    sum += parseInt(numbers.charAt(i)) * (11 - i);
+  }
+  digit = 11 - (sum % 11);
+  if (digit >= 10) digit = 0;
+  if (digit !== parseInt(numbers.charAt(10))) return false;
+
+  return true;
 }

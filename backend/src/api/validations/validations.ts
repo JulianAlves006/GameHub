@@ -1,5 +1,12 @@
 import argon2 from 'argon2';
-import type { Championship, Match, Metric, Team } from '../entities/index.ts';
+import type {
+  Championship,
+  Gamer,
+  Match,
+  Metric,
+  Team,
+  User,
+} from '../entities/index.ts';
 
 export async function checkPassword(
   plainPassword: string,
@@ -8,18 +15,18 @@ export async function checkPassword(
   return await argon2.verify(passwordHash, plainPassword);
 }
 
-export function loginValidation(body: any) {
+export function loginValidation(body: User) {
   const { email, password } = body;
   if (!email || !password) throw new Error('Email e senha são obrigatórios!');
 }
 
-export function createUserValidation(body: any) {
-  const { name, email, password, profile } = body;
-  if (!name || !email || !password || !profile)
+export function createUserValidation(body: User) {
+  const { name, email, password, profile, cpf } = body;
+  if (!name || !email || !password || !profile || !cpf)
     throw new Error('Informações faltando!');
 }
 
-export function updateUserValidation(body: any) {
+export function updateUserValidation(body: User) {
   const { id, name, email } = body;
   if (!name || !email || !id) throw new Error('Informações faltando!');
 }
@@ -32,7 +39,7 @@ export function deleteUserValidation(id: number, role: string) {
     );
 }
 
-export function createGamerValidation(body: any) {
+export function createGamerValidation(body: Gamer) {
   const { shirtNumber, user } = body;
 
   if (!shirtNumber || !user)
@@ -41,12 +48,12 @@ export function createGamerValidation(body: any) {
     );
 }
 
-export function editGamerValidation(body: any) {
+export function editGamerValidation(body: Gamer) {
   const { id } = body;
   if (!id) throw new Error('ID precisa estar preenchido para a edição');
 }
 
-export function deleteGamerValidation(body: any) {
+export function deleteGamerValidation(body: Gamer) {
   const { id } = body;
   if (!id) throw new Error('Id está vazio!');
 }

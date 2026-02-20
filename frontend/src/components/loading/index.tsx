@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wrapper, Overlay, Box, Spinner, Message, InlineWrap } from './styled';
+import { cn } from '@/lib/utils';
 
 export type LoadingSize = 'sm' | 'md' | 'lg';
 
@@ -20,6 +20,12 @@ export interface LoadingProps {
   'data-testid'?: string;
 }
 
+const sizeClasses = {
+  sm: 'w-8 h-8',
+  md: 'w-12 h-12',
+  lg: 'w-20 h-20',
+} as const;
+
 const Loading: React.FC<LoadingProps> = ({
   fullscreen = false,
   message,
@@ -30,41 +36,64 @@ const Loading: React.FC<LoadingProps> = ({
   ...rest
 }) => {
   const content = (
-    <Box
+    <div
       role='status'
       aria-live='polite'
       aria-busy='true'
-      $fillParent={fillParent}
-      className={className}
+      className={cn(
+        'relative z-10 grid place-items-center gap-3 p-6 rounded-2xl',
+        'bg-card border border-border shadow-lg',
+        'animate-pulse-glow',
+        fillParent && 'min-h-[42vh] w-full max-w-3xl',
+        className
+      )}
       {...rest}
     >
-      <Spinner aria-hidden $size={size} />
-      {message && <Message>{message}</Message>}
-      <span
-        style={{
-          position: 'absolute',
-          width: 1,
-          height: 1,
-          overflow: 'hidden',
-          clip: 'rect(0 0 0 0)',
-        }}
+      {/* Spinner */}
+      <div
+        aria-hidden
+        className={cn(
+          sizeClasses[size],
+          'rounded-full border-[3px] border-muted border-t-transparent',
+          'relative animate-spin'
+        )}
       >
-        Carregando
-      </span>
-    </Box>
+        {/* Gradient ring */}
+        <div
+          className={cn(
+            'absolute inset-[-3px] rounded-full',
+            'bg-gradient-conic from-primary via-secondary to-primary',
+            'animate-spin'
+          )}
+          style={{
+            mask: 'radial-gradient(farthest-side, transparent calc(100% - 3px), #000 0)',
+            WebkitMask:
+              'radial-gradient(farthest-side, transparent calc(100% - 3px), #000 0)',
+          }}
+        />
+      </div>
+      {message && (
+        <p className='text-sm text-foreground/90 font-medium'>{message}</p>
+      )}
+      <span className='sr-only'>Carregando</span>
+    </div>
   );
 
   if (fullscreen) {
     return (
-      <Wrapper>
-        <Overlay $opacity={overlayOpacity} />
+      <div className='fixed inset-0 z-[9999] grid place-items-center'>
+        {/* Overlay */}
+        <div
+          className='absolute inset-0 bg-background/80 backdrop-blur-sm'
+          style={{ opacity: overlayOpacity }}
+        />
         {content}
-      </Wrapper>
+      </div>
     );
   }
 
   // Modo inline (para dentro de cards, seções, etc.)
-  return <InlineWrap>{content}</InlineWrap>;
+  return <div className='grid place-items-center'>{content}</div>;
 };
 
 export default React.memo(Loading);

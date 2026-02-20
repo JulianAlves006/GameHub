@@ -115,12 +115,14 @@ export type Championship = {
 // Match
 export type Match = {
   id: number;
-  team1?: Team;
-  team2?: Team;
+  team1: Team;
+  team2: Team;
   winner?: Team | null;
-  championship?: Championship;
+  championship: Championship;
   status: string;
-  scoreboard: string | null;
+  scoreTeam1: number | null;
+  scoreTeam2: number | null;
+  matchDate: string | null;
   metrics?: Metric[];
   createdAt: string;
   updatedAt: string;

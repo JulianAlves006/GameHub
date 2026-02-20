@@ -1,40 +1,67 @@
 import { useEffect, useState } from 'react';
+import { cn } from '@/lib/utils';
 import { Table } from '../../components/Table';
-import { Container, Title } from '../../style';
 import api from '../../services/axios';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { formatDateFullText } from '../../services/utils';
 import { useNavigate } from 'react-router-dom';
 import Loading from '../../components/loading';
-import { PageHeader, FilterSelect, AddButton, TableContainer } from './styled';
 import { useApp } from '../../contexts/AppContext';
 import type { Championship } from '../../types/types';
+import { Button } from '../../components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/ui/select';
+import { isAxiosError } from 'axios';
+
+type ChampionshipResponse = {
+  championships: Championship[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalCount: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+    limit: number;
+  };
+};
 
 export default function Championships() {
   const ctx = useApp();
   const navigate = useNavigate();
   const [championships, setChampionships] = useState<Championship[]>([]);
-  const [filter, setFilter] = useState('');
+  const [filter, setFilter] = useState('all');
   const today = new Date().toISOString().split('T')[0];
   const user = ctx.user;
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     async function getChampionships() {
       setLoading(true);
       try {
-        const { data } = await api.get<Championship[]>('championship');
+        const { data } = await api.get<ChampionshipResponse>(
+          `championship?page=${page}`
+        );
+        setTotalPages(data.pagination.totalPages);
         let filtered: Championship[] = [];
-        if (filter === '') {
-          filtered = data.filter(d => d.endDate >= today);
+        if (filter === 'all') {
+          filtered = data.championships.filter(d => d.endDate >= today);
         } else if (filter === 'happening') {
-          filtered = data.filter(
+          filtered = data.championships.filter(
             d => d.endDate >= today && d.startDate <= today
           );
         } else if (filter === 'pending') {
-          filtered = data.filter(d => d.startDate > today);
+          filtered = data.championships.filter(d => d.startDate > today);
         } else if (filter === 'finished') {
-          filtered = data.filter(d => d.endDate < today);
+          filtered = data.championships.filter(d => d.endDate < today);
         }
         filtered.forEach(f => {
           Object.assign(f, {
@@ -43,15 +70,36 @@ export default function Championships() {
           });
         });
         setChampionships(filtered);
-      } catch (error: any) {
-        toast.error(error.response.data.error);
+      } catch (error: unknown) {
+        if (isAxiosError(error)) {
+          toast.error(error.response?.data?.error || 'Erro');
+        } else {
+          toast.error('Erro');
+        }
       } finally {
         setLoading(false);
       }
     }
 
     getChampionships();
-  }, [filter]);
+  }, [filter, today, page]);
+
+  const createButtons = () => {
+    const buttons = [];
+    for (let i = 1; i <= totalPages; i++) {
+      buttons.push(
+        <Button
+          key={i}
+          onClick={() => setPage(i)}
+          variant={page === i ? 'default' : 'outline'}
+          size='sm'
+        >
+          {i}
+        </Button>
+      );
+    }
+    return buttons;
+  };
 
   const config = [
     {
@@ -71,33 +119,51 @@ export default function Championships() {
     { key: 'startDateText', label: 'Inicio', element: 'tr' },
     { key: 'endDateText', label: 'Fim', element: 'tr' },
   ];
+
   return (
-    <Container>
+    <section className='flex flex-col items-center w-full min-h-screen p-4'>
       {loading && <Loading fullscreen message='Carregando dados...' />}
 
-      <Title>Campeonatos</Title>
-      <PageHeader>
-        {user?.profile === 'admin' && (
-          <AddButton onClick={() => navigate('/createChampionship')}>
-            Adicionar Campeonato
-          </AddButton>
-        )}
-        <FilterSelect
-          name='filter'
-          id='filter'
-          value={filter}
-          onChange={e => setFilter(e.target.value)}
-        >
-          <option value=''>Todos os campeonatos</option>
-          <option value='pending'>Pendentes</option>
-          <option value='happening'>Acontecendo</option>
-          <option value='finished'>Finalizados</option>
-        </FilterSelect>
-      </PageHeader>
+      <h1 className='text-4xl font-bold my-8 text-foreground'>Campeonatos</h1>
 
-      <TableContainer>
+      <div
+        className={cn(
+          'w-[90%] flex items-center justify-between gap-4',
+          'flex-wrap'
+        )}
+      >
+        {user?.profile === 'admin' && (
+          <Button onClick={() => navigate('/createChampionship')}>
+            Adicionar Campeonato
+          </Button>
+        )}
+        <Select
+          value={filter}
+          onValueChange={value => {
+            setFilter(value);
+          }}
+        >
+          <SelectTrigger className='w-[200px]'>
+            <SelectValue placeholder='Todos os campeonatos' />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectLabel>Status</SelectLabel>
+              <SelectItem value='all'>Todos os campeonatos</SelectItem>
+              <SelectItem value='pending'>Pendentes</SelectItem>
+              <SelectItem value='happening'>Acontecendo</SelectItem>
+              <SelectItem value='finished'>Finalizados</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className='w-full'>
         <Table config={config} data={championships} />
-      </TableContainer>
-    </Container>
+        <div className='w-[95%] gap-2 flex justify-end mt-5'>
+          {createButtons()}
+        </div>
+      </div>
+    </section>
   );
 }

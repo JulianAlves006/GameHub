@@ -1,7 +1,7 @@
-import { StrictMode } from 'react';
+import { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { Toaster } from './components/ui/sonner';
+import './index.css';
 import GlobalStyle from './style/index.ts';
 import Header from './components/header';
 import { BrowserRouter, useLocation } from 'react-router-dom';
@@ -16,23 +16,26 @@ function Layout() {
     location.pathname === '/register' ||
     location.pathname === '/gamer';
 
+  // Inicializa o tema ao carregar a aplicação
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia(
+      '(prefers-color-scheme: dark)'
+    ).matches;
+
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
   return (
     <AppProvider>
       <GlobalStyle />
       {!hideHeader && <Header />}
       <AppRoutes />
-      <ToastContainer
-        position='top-right'
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme='light'
-      />
+      <Toaster position='top-right' richColors closeButton />
     </AppProvider>
   );
 }

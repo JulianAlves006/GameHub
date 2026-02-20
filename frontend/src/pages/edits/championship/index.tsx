@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Title, Form } from '../../../style';
-import { toast } from 'react-toastify';
+import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import api from '../../../services/axios';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import Loading from '../../../components/loading';
 import AwardSelector from '../../../components/AwardSelector';
 import type { Award, AwardChampionship } from '../../../types/types';
 import { useApp } from '../../../contexts/AppContext';
+import { Input } from '../../../components/ui/input';
+import { Button } from '../../../components/ui/button';
+import { isAxiosError } from 'axios';
 
 export default function EditChampionship() {
   const navigate = useNavigate();
@@ -42,16 +46,20 @@ export default function EditChampionship() {
         const { data } = await api.get(`/championship?idChampionship=${id}`);
         setName(data[0].name);
         const awardsChampionships = data[0].awardsChampionships;
-        const awards = awardsChampionships.map((aC: AwardChampionship) => ({
+        const awardsData = awardsChampionships.map((aC: AwardChampionship) => ({
           id: aC?.award?.id,
           description: aC?.award?.description,
           awardsChampionships: true,
           awardsChampionshipsId: aC.id,
           uniqueIndex: Date.now() + Math.random(), // Índice único para prêmios existentes
         }));
-        setAwardsOfChampionship(awards);
-      } catch (error: any) {
-        toast.error(error?.response?.data?.error || 'Erro ao buscar dados');
+        setAwardsOfChampionship(awardsData);
+      } catch (error: unknown) {
+        if (isAxiosError(error)) {
+          toast.error(error.response?.data?.error || 'Erro ao buscar dados');
+        } else {
+          toast.error('Erro ao buscar dados');
+        }
       } finally {
         setLoading(false);
       }
@@ -62,8 +70,12 @@ export default function EditChampionship() {
       try {
         const { data } = await api.get(`/award?id=${user?.id}`);
         setAwards(data);
-      } catch (error: any) {
-        toast.error(error.response.data.error);
+      } catch (error: unknown) {
+        if (isAxiosError(error)) {
+          toast.error(error.response?.data?.error || 'Erro');
+        } else {
+          toast.error('Erro');
+        }
       } finally {
         setLoading(false);
       }
@@ -71,7 +83,7 @@ export default function EditChampionship() {
 
     getChampionship();
     getAwards();
-  }, []);
+  }, [id, navigate, user?.id, user?.profile]);
 
   const handleAwardSelect = (award: {
     id: number;
@@ -121,8 +133,12 @@ export default function EditChampionship() {
       });
       toast.success('Campeonato editado com sucesso!');
       navigate('/championships');
-    } catch (error: any) {
-      toast.error(error.response.data.error || 'Erro ao editar campeonato');
+    } catch (error: unknown) {
+      if (isAxiosError(error)) {
+        toast.error(error.response?.data?.error || 'Erro ao editar campeonato');
+      } else {
+        toast.error('Erro ao editar campeonato');
+      }
     } finally {
       setLoading(false);
     }
@@ -157,16 +173,36 @@ export default function EditChampionship() {
   }
 
   return (
-    <Container>
+    <section className='flex flex-col items-center w-full min-h-screen p-4'>
       {loading && <Loading fullscreen message='Carregando dados...' />}
-      <Title>Criação de campeonatos</Title>
-      <Form onSubmit={handleSubmit}>
-        <h1>Campeonato</h1>
-        <input
+      <div className='w-full flex justify-start mb-4'>
+        <Button
+          variant='ghost'
+          onClick={() => navigate(-1)}
+          className='flex items-center gap-2'
+        >
+          <ArrowLeft size={20} />
+          Voltar
+        </Button>
+      </div>
+      <h1 className='text-4xl font-bold my-8 text-foreground'>
+        Edição de campeonatos
+      </h1>
+      <form
+        onSubmit={handleSubmit}
+        className={cn(
+          'relative flex flex-col items-center w-full max-w-2xl mx-auto',
+          'border border-border rounded-xl p-6 shadow-lg',
+          'bg-card text-card-foreground gap-4'
+        )}
+      >
+        <h2 className='text-2xl font-semibold mb-2'>Campeonato</h2>
+        <Input
           type='text'
           value={name}
           placeholder='Nome do seu campeonato'
           onChange={e => setName(e.target.value)}
+          className='w-[60%]'
         />
         <AwardSelector
           awards={awards}
@@ -176,8 +212,10 @@ export default function EditChampionship() {
           onNewAwardRemove={handleRemoveNewAward}
           placeholder='Selecionar prêmios'
         />
-        <button>Editar</button>
-      </Form>
-    </Container>
+        <Button type='submit' className='w-[60%]'>
+          Editar
+        </Button>
+      </form>
+    </section>
   );
 }

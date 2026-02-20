@@ -9,6 +9,7 @@ import {
   deleteUser,
   getUserByID,
   getUsers,
+  getUserProfilePicture,
   updateUser,
 } from '../repositories/userRepository.ts';
 import { createLog } from '../repositories/logRepository.ts';
@@ -36,9 +37,13 @@ export async function getUserHandler(id?: User['id']): Promise<User | User[]> {
   }
 }
 
-export async function createUserHandler(body: any) {
+export async function createUserHandler(
+  body: User,
+  profilePicture: Buffer | null = null,
+  contentType: string | null = null
+) {
   try {
-    const { name, email, password, profile } = body;
+    const { name, email, password, profile, cpf } = body;
     createUserValidation(body);
 
     const passwordHash = await argon2.hash(password, {
@@ -53,10 +58,11 @@ export async function createUserHandler(body: any) {
       email,
       password: passwordHash,
       profile,
+      cpf,
       isActive: 1,
     };
 
-    const newUser = await createUser(user);
+    const newUser = await createUser(user as User, profilePicture, contentType);
     await createLog(
       newUser.id,
       'CREATE_USER',
@@ -75,11 +81,15 @@ export async function createUserHandler(body: any) {
   }
 }
 
-export async function updateUserHandler(body: any) {
+export async function updateUserHandler(
+  body: any,
+  profilePicture: Buffer | null = null,
+  contentType: string | null = null
+) {
   try {
     const { id, name, email, password } = body;
     updateUserValidation(body);
-    let newUser;
+    let newUser: Partial<User> & { id: number };
     if (password) {
       const passwordHash = await argon2.hash(password, {
         type: argon2.argon2id,
@@ -101,7 +111,7 @@ export async function updateUserHandler(body: any) {
       };
     }
 
-    const response = await updateUser(newUser);
+    const response = await updateUser(newUser, profilePicture, contentType);
 
     await createLog(
       newUser.id,
@@ -144,6 +154,21 @@ export async function deleteUserHandler(
       error instanceof Error
         ? error.message
         : 'Erro desconhecido na deleção de usuário';
+    throw new Error(errorMessage);
+  }
+}
+
+export async function getUserProfilePictureHandler(id: number) {
+  try {
+    const user = await getUserProfilePicture(id);
+    return user;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Erro no getUserProfilePictureHandler: ', error);
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : 'Erro desconhecido ao buscar foto de perfil';
     throw new Error(errorMessage);
   }
 }

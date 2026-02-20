@@ -4,7 +4,7 @@ import { Gamer, Team, User } from '../entities/index.ts';
 import { v4 as uuid } from 'uuid';
 
 const teamRepository = AppDataSource.getRepository(Team);
-const PREFIX = process.env.S3_PUBLIC_PREFIX || 'uploads/teams/';
+const PREFIX = process.env.S3_PUBLIC_PREFIX_TEAM;
 
 export async function getTeamLogo(id: number) {
   const team = await teamRepository.findOne({
@@ -29,7 +29,8 @@ export async function getTeams(
   page: number = 1,
   limit: number = 10,
   id: number,
-  idAdmin: number
+  idAdmin: number,
+  search: string | null = null
 ) {
   const skip = (page - 1) * limit;
 
@@ -57,7 +58,56 @@ export async function getTeams(
     });
   }
 
-  // Buscar todos os times
+  // Se houver busca, primeiro buscar TODOS os times para calcular posições
+  let allTeamsRanked: Array<{ team: Team; totalScore: number }> = [];
+  if (search) {
+    const allTeamsQuery = teamRepository
+      .createQueryBuilder('team')
+      .leftJoinAndSelect('team.gamers', 'gamers')
+      .leftJoinAndSelect('team.gamer', 'gamer')
+      .leftJoinAndSelect('gamers.user', 'user')
+      .leftJoinAndSelect('gamers.metrics', 'gamersMetrics')
+      .leftJoinAndSelect('gamer.user', 'gamerUser')
+      .leftJoinAndSelect('team.matchesAsTeam1', 'matchesAsTeam1')
+      .leftJoinAndSelect('team.matchesAsTeam2', 'matchesAsTeam2')
+      .leftJoinAndSelect('team.matchesWon', 'matchesWon');
+
+    // Aplicar filtros de id/idAdmin se existirem
+    if (id && !idAdmin) {
+      allTeamsQuery.where('team.id = :id', { id });
+    } else if (idAdmin && !id) {
+      allTeamsQuery.where('gamer.id = :idAdmin', { idAdmin });
+    } else if (id && idAdmin) {
+      allTeamsQuery.where('team.id = :id AND gamer.id = :idAdmin', {
+        id,
+        idAdmin,
+      });
+    }
+
+    const allTeamsForRanking = await allTeamsQuery.getMany();
+    allTeamsRanked = allTeamsForRanking
+      .map(team => {
+        const totalScore =
+          team.gamers?.reduce((sum, gamer) => sum + (gamer.score || 0), 0) || 0;
+        return { team, totalScore };
+      })
+      .sort((a, b) => b.totalScore - a.totalScore);
+  }
+
+  // Aplicar filtro de busca por nome se fornecido
+  if (search) {
+    if (id || idAdmin) {
+      teamsQuery = teamsQuery.andWhere('team.name LIKE :search', {
+        search: `${search}%`,
+      });
+    } else {
+      teamsQuery = teamsQuery.where('team.name LIKE :search', {
+        search: `${search}%`,
+      });
+    }
+  }
+
+  // Buscar todos os times (filtrados se houver busca)
   const allTeams = await teamsQuery.getMany();
 
   // Calcular score total para cada time e ordenar
@@ -68,6 +118,16 @@ export async function getTeams(
       return { ...team, totalScore };
     })
     .sort((a, b) => b.totalScore - a.totalScore);
+
+  // Se houver busca, adicionar posição baseada no ranking completo
+  if (search && allTeamsRanked.length > 0) {
+    teamsWithScore.forEach(teamWithScore => {
+      const position = allTeamsRanked.findIndex(
+        ranked => ranked.team.id === teamWithScore.id
+      );
+      (teamWithScore as any).position = position >= 0 ? position + 1 : null;
+    });
+  }
 
   // Aplicar paginação
   const totalCount = teamsWithScore.length;

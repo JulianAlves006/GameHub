@@ -8,9 +8,17 @@ import {
 
 const awardsRepository = AppDataSource.getRepository(Award);
 
-export async function getChampionship(idChampionship: number, idAdmin: number) {
+export async function getChampionship(
+  idChampionship: number | undefined,
+  idAdmin: number | undefined,
+  page: number = 1,
+  limit: number = 10
+) {
+  const championshipRepository = AppDataSource.getRepository(Championship);
+  const skip = (page - 1) * limit;
+
+  // Se há idChampionship específico, retorna sem paginação (busca única)
   if (idChampionship && !idAdmin) {
-    const championshipRepository = AppDataSource.getRepository(Championship);
     const championship = await championshipRepository.find({
       relations: {
         admin: true,
@@ -24,23 +32,9 @@ export async function getChampionship(idChampionship: number, idAdmin: number) {
 
     return championship;
   }
-  if (idAdmin && !idChampionship) {
-    const championshipRepository = AppDataSource.getRepository(Championship);
-    const championship = await championshipRepository.find({
-      relations: {
-        admin: true,
-        matches: { team1: true, team2: true, winner: true, championship: true },
-        awardsChampionships: { award: true },
-      },
-      where: {
-        admin: { id: idAdmin },
-      },
-    });
 
-    return championship;
-  }
+  // Se há idAdmin e idChampionship, retorna sem paginação (busca única)
   if (idAdmin && idChampionship) {
-    const championshipRepository = AppDataSource.getRepository(Championship);
     const championship = await championshipRepository.find({
       relations: {
         admin: true,
@@ -55,16 +49,51 @@ export async function getChampionship(idChampionship: number, idAdmin: number) {
 
     return championship;
   }
-  const championshipRepository = AppDataSource.getRepository(Championship);
-  const championship = await championshipRepository.find({
-    relations: {
-      admin: true,
-      matches: true,
-      awardsChampionships: { award: true },
-    },
-  });
 
-  return championship;
+  // Para buscas múltiplas, usar QueryBuilder e aplicar paginação
+  let championshipsQuery = championshipRepository
+    .createQueryBuilder('championship')
+    .leftJoinAndSelect('championship.admin', 'admin')
+    .leftJoinAndSelect('championship.matches', 'matches')
+    .leftJoinAndSelect('matches.team1', 'team1')
+    .leftJoinAndSelect('matches.team2', 'team2')
+    .leftJoinAndSelect('matches.winner', 'winner')
+    .leftJoinAndSelect('matches.championship', 'matchChampionship')
+    .leftJoinAndSelect(
+      'championship.awardsChampionships',
+      'awardsChampionships'
+    )
+    .leftJoinAndSelect('awardsChampionships.award', 'award');
+
+  // Aplicar filtro por admin se fornecido
+  if (idAdmin && !idChampionship) {
+    championshipsQuery = championshipsQuery.where('admin.id = :idAdmin', {
+      idAdmin,
+    });
+  }
+
+  // Buscar todos os campeonatos (antes da paginação para contar total)
+  const allChampionships = await championshipsQuery.getMany();
+
+  // Aplicar paginação
+  const totalCount = allChampionships.length;
+  const championships = allChampionships.slice(skip, skip + limit);
+
+  const totalPages = Math.ceil(totalCount / limit);
+  const hasNextPage = page < totalPages;
+  const hasPreviousPage = page > 1;
+
+  return {
+    championships,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalCount,
+      hasNextPage,
+      hasPreviousPage,
+      limit,
+    },
+  };
 }
 
 export async function createChampionchip(

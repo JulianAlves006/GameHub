@@ -9,7 +9,7 @@ import {
   Legend,
 } from 'chart.js';
 import { Radar } from 'react-chartjs-2';
-import { RadarChartContainer, ChartWrapper } from './styled';
+import { cn } from '@/lib/utils';
 
 // Registra os elementos necessários do Chart.js
 ChartJS.register(
@@ -85,11 +85,21 @@ const RadarChart: React.FC<RadarChartProps> = ({ config }) => {
   };
 
   return (
-    <RadarChartContainer>
-      <ChartWrapper>
+    <div
+      className={cn(
+        'w-full h-full',
+        'flex justify-center items-center bg-card rounded-xl shadow-lg'
+      )}
+    >
+      <div
+        className={cn(
+          'w-full h-full',
+          'relative flex justify-center items-center'
+        )}
+      >
         <Radar data={config.data} options={mergedOptions} />
-      </ChartWrapper>
-    </RadarChartContainer>
+      </div>
+    </div>
   );
 };
 

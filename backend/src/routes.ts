@@ -31,11 +31,22 @@ routes.post('/login', loginController.login);
 
 //Rotas de usuários ---------------------------------------------------------------------------------------------------------------------------------------------------
 routes.get('/user', authMiddleware, UserController.getUser);
-routes.post('/user', UserController.createUser);
-routes.put('/user', authMiddleware, UserController.updateUser);
+routes.get('/user/:id/profilePicture', UserController.getUserProfilePicture);
+routes.post(
+  '/user',
+  upload.single('profilePicture'),
+  UserController.createUser
+);
+routes.put(
+  '/user',
+  upload.single('profilePicture'),
+  authMiddleware,
+  UserController.updateUser
+);
 routes.delete('/user', authMiddleware, UserController.deleteUser);
 
 //Rotas de gamers ---------------------------------------------------------------------------------------------------------------------------------------------------
+routes.get('/gamer/top', GamerController.getTopGamers);
 routes.get('/gamer', GamerController.getGamers);
 routes.post('/gamer', GamerController.createGamer);
 routes.put('/gamer', GamerController.updateGamer);
@@ -95,6 +106,7 @@ routes.delete(
 );
 
 //Rotas de partidas  ---------------------------------------------------------------------------------------------------------------------------------------------------
+routes.get('/matchesCount', matchController.getMatchesPlayingFinished);
 routes.get('/match', matchController.getMatches);
 routes.post('/match', authMiddleware, matchController.createMatch);
 routes.put('/match', authMiddleware, matchController.updateMatch);

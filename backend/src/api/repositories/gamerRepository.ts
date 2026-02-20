@@ -3,12 +3,101 @@ import { Gamer, Team, Metric } from '../entities/index.ts';
 
 const gamerRepository = AppDataSource.getRepository(Gamer);
 
+export async function getTopGamers() {
+  // 1. Jogador com maior score
+  const topScorer = await gamerRepository
+    .createQueryBuilder('gamer')
+    .leftJoinAndSelect('gamer.user', 'user')
+    .orderBy('gamer.score', 'DESC')
+    .getOne();
+
+  // 2. Jogador com mais gols
+  const topGoalScorer = await gamerRepository
+    .createQueryBuilder('gamer')
+    .leftJoinAndSelect('gamer.user', 'user')
+    .leftJoin('gamer.metrics', 'metrics')
+    .addSelect(
+      'COALESCE(SUM(CASE WHEN metrics.type = :golType THEN metrics.quantity ELSE 0 END), 0)',
+      'totalGoals'
+    )
+    .setParameter('golType', 'gol')
+    .groupBy('gamer.id')
+    .addGroupBy('user.id')
+    .orderBy('totalGoals', 'DESC')
+    .getRawAndEntities();
+
+  // 3. Jogador com mais defesas
+  const topGoalkeeper = await gamerRepository
+    .createQueryBuilder('gamer')
+    .leftJoinAndSelect('gamer.user', 'user')
+    .leftJoin('gamer.metrics', 'metrics')
+    .addSelect(
+      'COALESCE(SUM(CASE WHEN metrics.type = :defesaType THEN metrics.quantity ELSE 0 END), 0)',
+      'totalSaves'
+    )
+    .setParameter('defesaType', 'defesa')
+    .groupBy('gamer.id')
+    .addGroupBy('user.id')
+    .orderBy('totalSaves', 'DESC')
+    .getRawAndEntities();
+
+  return {
+    topScorer: topScorer
+      ? {
+          id: topScorer.id,
+          name: topScorer.user?.name,
+          score: topScorer.score,
+        }
+      : null,
+    topGoalScorer:
+      topGoalScorer.entities.length > 0
+        ? {
+            id: topGoalScorer.entities[0]?.id,
+            name: topGoalScorer.entities[0]?.user?.name,
+            goals: parseInt(topGoalScorer.raw[0]?.totalGoals || '0'),
+          }
+        : null,
+    topGoalkeeper:
+      topGoalkeeper.entities.length > 0
+        ? {
+            id: topGoalkeeper.entities[0]?.id,
+            name: topGoalkeeper.entities[0]?.user?.name,
+            saves: parseInt(topGoalkeeper.raw[0]?.totalSaves || '0'),
+          }
+        : null,
+  };
+}
+
 export async function getGamers(
   page: number = 1,
   limit: number = 10,
-  id: number | null = null
+  id: number | null = null,
+  search: string | null = null
 ) {
   const skip = (page - 1) * limit;
+
+  // Se houver busca, primeiro buscar TODOS os gamers para calcular posições
+  let allGamersRanked: Array<{ gamer: Gamer; score: number }> = [];
+  if (search) {
+    const allGamersQuery = gamerRepository
+      .createQueryBuilder('gamer')
+      .leftJoinAndSelect('gamer.user', 'user')
+      .leftJoinAndSelect('gamer.team', 'team')
+      .leftJoinAndSelect('gamer.metrics', 'metrics');
+
+    // Aplicar filtro por ID se fornecido
+    if (id) {
+      allGamersQuery.where('gamer.id = :id', { id });
+    }
+
+    const allGamersForRanking = await allGamersQuery.getMany();
+    allGamersRanked = allGamersForRanking
+      .map(gamer => ({
+        gamer,
+        score: gamer.score || 0,
+      }))
+      .sort((a, b) => b.score - a.score);
+  }
 
   // Criar query builder com relações
   let gamersQuery = gamerRepository
@@ -22,6 +111,19 @@ export async function getGamers(
     gamersQuery = gamersQuery.where('gamer.id = :id', { id });
   }
 
+  // Aplicar filtro de busca por nome se fornecido
+  if (search) {
+    if (id) {
+      gamersQuery = gamersQuery.andWhere('user.name LIKE :search', {
+        search: `${search}%`,
+      });
+    } else {
+      gamersQuery = gamersQuery.where('user.name LIKE :search', {
+        search: `${search}%`,
+      });
+    }
+  }
+
   // Buscar todos os gamers (antes da paginação para contar total)
   const allGamers = await gamersQuery.getMany();
 
@@ -29,6 +131,16 @@ export async function getGamers(
   const sortedGamers = allGamers.sort(
     (a, b) => (b.score || 0) - (a.score || 0)
   );
+
+  // Se houver busca, adicionar posição baseada no ranking completo
+  if (search && allGamersRanked.length > 0) {
+    sortedGamers.forEach(gamer => {
+      const position = allGamersRanked.findIndex(
+        ranked => ranked.gamer.id === gamer.id
+      );
+      (gamer as any).position = position >= 0 ? position + 1 : null;
+    });
+  }
 
   // Aplicar paginação
   const totalCount = sortedGamers.length;
@@ -99,23 +211,6 @@ export async function updateGamer(body: any) {
   });
 
   if (!gamer) throw new Error('Gamer não encontrado');
-  if (gamer.team) {
-    const teamData = await AppDataSource.getRepository(Team).findOne({
-      where: { id: gamer.team.id },
-      relations: {
-        matchesAsTeam1: true,
-        matchesAsTeam2: true,
-      },
-    });
-    if (teamData?.matchesAsTeam1.some(match => match.status === 'playing'))
-      throw new Error(
-        'Gamer está em uma partida, portanto por enquanto não pode ser editado!'
-      );
-    if (teamData?.matchesAsTeam2.some(match => match.status === 'playing'))
-      throw new Error(
-        'Gamer está em uma partida, portanto por enquanto não pode ser editado!'
-      );
-  }
 
   const updateData: any = {};
 

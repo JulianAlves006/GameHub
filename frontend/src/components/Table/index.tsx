@@ -1,10 +1,17 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 
-import { Data, TableCard } from './styled';
-import { Center } from '../../style';
 import withoutLogo from '../../assets/withoutLogo.png';
 import Loading from '../loading';
+import {
+  Table as ShadcnTable,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 interface Config {
   key: string;
@@ -51,99 +58,110 @@ export const Table = ({
       return prev;
     });
   }
+
+  const linkClassName = cn(
+    'text-foreground no-underline font-semibold',
+    'relative after:content-[""] after:absolute',
+    'after:left-0 after:right-0 after:bottom-[-2px]',
+    'after:h-px after:bg-current after:scale-x-0',
+    'after:origin-left after:transition-transform',
+    'hover:after:scale-x-100'
+  );
+
   return (
-    <TableCard>
-      <div>
-        {data.length > 0 ? (
-          <Data>
-            <thead>
-              <tr>
-                {config.map((conf: Config) => (
-                  <th key={conf.key}>{conf.label}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((d: any, index: number) => (
-                <tr key={d.id || index}>
-                  {config.map((conf: Config) => (
-                    <td key={conf.key}>
-                      {conf.key === 'position' ? (
-                        (currentPage - 1) * itemsPerPage + index + 1
-                      ) : conf.element === 'link' ? (
-                        <b>
-                          <Link
-                            to={`/${conf.linkDirection}/${d[conf.linkContent || conf.key]}`}
-                          >
-                            {conf.content ? d[conf.key] : 'Acessar'}
-                          </Link>
-                        </b>
-                      ) : conf.element === 'filter' ? (
-                        <b>
-                          <Link
-                            to={`/${conf.linkDirection}?${d[conf.linkContent || conf.key]}`}
-                          >
-                            {conf.content ? d[conf.key] : 'Acessar'}
-                          </Link>
-                        </b>
-                      ) : conf.key === 'logo' && isTeams ? (
-                        <div
-                          style={{
-                            position: 'relative',
-                            display: 'inline-block',
-                          }}
-                        >
-                          {(loadingImages[d.id] === undefined ||
-                            loadingImages[d.id]) && (
-                            <div
-                              style={{
-                                position: 'absolute',
-                                top: '50%',
-                                left: '50%',
-                                transform: 'translate(-50%, -50%)',
-                                zIndex: 1,
-                              }}
-                            >
-                              <Loading size='sm' />
-                            </div>
-                          )}
-                          <img
-                            style={{
-                              cursor: 'pointer',
-                              objectFit: 'cover',
-                              opacity: loadingImages[d.id] === false ? 1 : 0,
-                              transition: 'opacity 0.3s',
-                            }}
-                            src={`http://localhost:3333/team/${d.id}/logo`}
-                            alt={`${d.name} logo`}
-                            onLoad={() => handleImageLoad(d.id)}
-                            onError={e => {
-                              e.currentTarget.src = withoutLogo;
-                              handleImageLoad(d.id);
-                            }}
-                            onLoadStart={() => {
-                              if (loadingImages[d.id] === undefined) {
-                                handleImageStartLoad(d.id);
-                              }
-                            }}
-                            onClick={() => handleClick(d.id)}
-                          />
-                        </div>
-                      ) : (
-                        d[conf.key]
-                      )}
-                    </td>
-                  ))}
-                </tr>
+    <section
+      className={cn(
+        'w-[90%] max-w-[92vw] bg-card border border-border rounded-2xl',
+        'shadow-lg text-foreground mx-auto my-3 overflow-hidden'
+      )}
+    >
+      {data.length > 0 ? (
+        <ShadcnTable>
+          <TableHeader>
+            <TableRow className='border-b-2 border-border bg-background hover:bg-background'>
+              {config.map((conf: Config) => (
+                <TableHead key={conf.key}>{conf.label}</TableHead>
               ))}
-            </tbody>
-          </Data>
-        ) : (
-          <Center>
-            <h1 style={{ margin: '20px 0 20px 0' }}>Nenhum dado encontrado</h1>
-          </Center>
-        )}
-      </div>
-    </TableCard>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.map((d: Record<string, unknown>, index: number) => (
+              <TableRow
+                key={(d.id as number) || index}
+                className={cn(
+                  index % 2 === 0 ? 'bg-transparent' : 'bg-muted/30',
+                  'hover:bg-primary/10'
+                )}
+              >
+                {config.map((conf: Config) => (
+                  <TableCell key={conf.key}>
+                    {conf.key === 'position' ? (
+                      (currentPage - 1) * itemsPerPage + index + 1
+                    ) : conf.element === 'link' ? (
+                      <b>
+                        <Link
+                          to={`/${conf.linkDirection}/${d[conf.linkContent || conf.key]}`}
+                          className={linkClassName}
+                        >
+                          {conf.content ? (d[conf.key] as string) : 'Acessar'}
+                        </Link>
+                      </b>
+                    ) : conf.element === 'filter' ? (
+                      <b>
+                        <Link
+                          to={`/${conf.linkDirection}?${d[conf.linkContent || conf.key]}`}
+                          className={linkClassName}
+                        >
+                          {conf.content ? (d[conf.key] as string) : 'Acessar'}
+                        </Link>
+                      </b>
+                    ) : conf.key === 'logo' && isTeams ? (
+                      <div className='relative inline-block'>
+                        {(loadingImages[d.id as number] === undefined ||
+                          loadingImages[d.id as number]) && (
+                          <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10'>
+                            <Loading size='sm' />
+                          </div>
+                        )}
+                        <img
+                          className={cn(
+                            'w-20 h-20 object-cover rounded-lg cursor-pointer',
+                            'transition-opacity duration-300',
+                            loadingImages[d.id as number] === false
+                              ? 'opacity-100'
+                              : 'opacity-0'
+                          )}
+                          src={`https://gamehub-mcq4.onrender.com/team/${d.id}/logo`}
+                          alt={`${d.name} logo`}
+                          onLoad={() => handleImageLoad(d.id as number)}
+                          onError={e => {
+                            e.currentTarget.src = withoutLogo;
+                            handleImageLoad(d.id as number);
+                          }}
+                          onLoadStart={() => {
+                            if (loadingImages[d.id as number] === undefined) {
+                              handleImageStartLoad(d.id as number);
+                            }
+                          }}
+                          onClick={() => handleClick(d.id as number)}
+                        />
+                      </div>
+                    ) : (
+                      (d[conf.key] as React.ReactNode)
+                    )}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </ShadcnTable>
+      ) : (
+        <div className='flex-1 flex justify-center items-center py-10'>
+          <h1 className='text-xl font-semibold text-muted-foreground'>
+            Nenhum dado encontrado
+          </h1>
+        </div>
+      )}
+    </section>
   );
 };

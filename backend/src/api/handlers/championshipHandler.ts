@@ -17,11 +17,18 @@ import {
 } from '../validations/validations.ts';
 
 export async function getChampionshipHandler(
-  idChampionship: number,
-  idAdmin: number
+  idChampionship: number | undefined,
+  idAdmin: number | undefined,
+  page: number = 1,
+  limit: number = 10
 ) {
   try {
-    const response = getChampionship(idChampionship, idAdmin);
+    const response = await getChampionship(
+      idChampionship,
+      idAdmin,
+      page,
+      limit
+    );
     return response;
   } catch (error) {
     // eslint-disable-next-line no-console
