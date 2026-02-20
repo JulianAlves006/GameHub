@@ -98,11 +98,11 @@ export async function getTeams(
   if (search) {
     if (id || idAdmin) {
       teamsQuery = teamsQuery.andWhere('team.name LIKE :search', {
-        search: `${search}%`,
+        search: `%${search}%`,
       });
     } else {
       teamsQuery = teamsQuery.where('team.name LIKE :search', {
-        search: `${search}%`,
+        search: `%${search}%`,
       });
     }
   }

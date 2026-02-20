@@ -46,9 +46,9 @@ export async function getMatches(
       .leftJoinAndSelect('match.metrics', 'metrics')
       .leftJoinAndSelect('metrics.gamer', 'metricsGamer')
       .leftJoinAndSelect('metricsGamer.user', 'metricsGamerUser')
-      .where('championship.name LIKE :search', { search: `${search}%` })
-      .orWhere('team1.name LIKE :search', { search: `${search}%` })
-      .orWhere('team2.name LIKE :search', { search: `${search}%` })
+      .where('championship.name LIKE :search', { search: `%${search}%` })
+      .orWhere('team1.name LIKE :search', { search: `%${search}%` })
+      .orWhere('team2.name LIKE :search', { search: `%${search}%` })
       .skip(skip)
       .take(limit);
 

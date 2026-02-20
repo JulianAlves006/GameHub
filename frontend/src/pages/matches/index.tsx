@@ -247,12 +247,11 @@ export default function Matches() {
       if (search.trim()) {
         try {
           const { data } = await api.get(`/match?search=${search}`);
-          if (data.matches && data.matches.length > 0) {
-            setTotalPages(data.pagination.totalPages);
-            // Processa as partidas e separa por status
-            processMatches(data.matches);
-            data.matches.map(formatMatch);
-          }
+
+          setTotalPages(data.pagination.totalPages);
+          // Processa as partidas e separa por status
+          processMatches(data.matches);
+          data.matches.map(formatMatch);
         } catch (error) {
           console.error('Erro ao buscar:', error);
         }
@@ -310,6 +309,7 @@ export default function Matches() {
     setTimeout(() => {
       setSearch(e.target.value);
       setSearchLoading(false);
+      setPage(1);
     }, 2000);
   }
 

@@ -115,11 +115,11 @@ export async function getGamers(
   if (search) {
     if (id) {
       gamersQuery = gamersQuery.andWhere('user.name LIKE :search', {
-        search: `${search}%`,
+        search: `%${search}%`,
       });
     } else {
       gamersQuery = gamersQuery.where('user.name LIKE :search', {
-        search: `${search}%`,
+        search: `%${search}%`,
       });
     }
   }
