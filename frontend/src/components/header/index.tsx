@@ -132,7 +132,7 @@ export default function Header() {
             {team && (
               <img
                 onClick={() => navigate(`/team/${team.id}`)}
-                src={`${ctx.ctx.apiURL}/team/${(team as Team).id}/logo`}
+                src={`${ctx.apiURL}/team/${(team as Team).id}/logo`}
                 alt={`${(team as Team).name} logo`}
                 onError={e => {
                   e.currentTarget.src = withoutLogo;
