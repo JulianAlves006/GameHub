@@ -1,10 +1,9 @@
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { FaUserAlt } from 'react-icons/fa';
 import { cn } from '@/lib/utils';
 
 import icon from '../../assets/icon.png';
 import logo from '../../assets/logo.png';
-import withoutLogo from '../../assets/withoutLogo.png';
+import Image from '../Image';
 
 import { useEffect, useState } from 'react';
 import { isAxiosError } from 'axios';
@@ -28,8 +27,6 @@ export default function Header() {
   const { getNotifications } = useNotifications({ setLoading });
   const [teamAdmin, setTeamAdmin] = useState<Team>();
   const gamerId = user?.gamers?.[0]?.id;
-  const [imageLoading, setImageLoading] = useState(true);
-  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     getNotifications();
@@ -130,35 +127,29 @@ export default function Header() {
           >
             <ThemeToggle />
             {team && (
-              <img
-                onClick={() => navigate(`/team/${team.id}`)}
-                src={`${ctx.apiURL}/team/${(team as Team).id}/logo`}
-                alt={`${(team as Team).name} logo`}
-                onError={e => {
-                  e.currentTarget.src = withoutLogo;
-                }}
+              <Image
+                url={`${(team as Team).id}/logo`}
+                name={(team as Team).name}
                 className={cn(
                   'w-10 h-10 object-cover rounded-lg',
                   'border-2 border-secondary cursor-pointer',
                   'transition-all hover:scale-105 hover:border-primary',
                   'shadow-md max-md:w-8 max-md:h-8'
                 )}
+                onClick={() => navigate(`/team/${team.id}`)}
               />
             )}
             {teamAdmin && !team && (
-              <img
-                onClick={() => navigate(`/team/${teamAdmin.id}`)}
-                src={`${ctx.apiURL}/team/${teamAdmin.id}/logo`}
-                alt={`${teamAdmin.name} logo`}
-                onError={e => {
-                  e.currentTarget.src = withoutLogo;
-                }}
+              <Image
+                url={`${teamAdmin.id}/logo`}
+                name={teamAdmin.name}
                 className={cn(
                   'w-10 h-10 object-cover rounded-lg',
                   'border-2 border-secondary cursor-pointer',
                   'transition-all hover:scale-105 hover:border-primary',
                   'shadow-md max-md:w-8 max-md:h-8'
                 )}
+                onClick={() => navigate(`/team/${teamAdmin.id}`)}
               />
             )}
             <DropdownMenu>
@@ -174,37 +165,12 @@ export default function Header() {
                   <span className='text-sm flex items-center gap-2.5 max-md:text-xs'>
                     {user?.name}
                     <div className='relative w-8 h-8 rounded-full overflow-hidden border-2 border-border shrink-0 max-md:w-6 max-md:h-6'>
-                      {imageLoading && !imageError && (
-                        <div className='absolute inset-0 flex items-center justify-center bg-muted'>
-                          <div className='w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin max-md:w-3 max-md:h-3' />
-                        </div>
-                      )}
-                      {imageError ? (
-                        <div className='w-full h-full flex items-center justify-center text-muted-foreground bg-muted'>
-                          <FaUserAlt
-                            size={12}
-                            className='max-md:w-3 max-md:h-3'
-                          />
-                        </div>
-                      ) : (
-                        <img
-                          src={`${ctx.apiURL}/user/${user?.id}/profilePicture`}
-                          alt={`Foto de perfil de ${user?.name}`}
-                          className={cn(
-                            'w-full h-full object-cover transition-opacity duration-300',
-                            imageLoading ? 'opacity-0' : 'opacity-100'
-                          )}
-                          onClick={() => navigate(`/user/${user?.id}`)}
-                          onLoad={() => {
-                            setImageLoading(false);
-                            setImageError(false);
-                          }}
-                          onError={() => {
-                            setImageError(true);
-                            setImageLoading(false);
-                          }}
-                        />
-                      )}
+                      <Image
+                        url={`/user/${user?.id}/profilePicture`}
+                        name={user?.name ?? 'Usuário'}
+                        className='w-full h-full object-cover transition-opacity duration-300'
+                        onClick={() => navigate(`/user/${user?.id}`)}
+                      />
                     </div>
                   </span>
                 </Button>

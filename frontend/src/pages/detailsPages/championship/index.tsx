@@ -12,7 +12,7 @@ import {
   type Award,
 } from '../../../types/types';
 import { isAxiosError } from 'axios';
-import withoutLogo from '../../../assets/withoutLogo.png';
+import Image from '@/components/Image';
 
 type AwardResponse = {
   award: Award;
@@ -156,12 +156,9 @@ export default function Championship() {
                   >
                     {m.team1 && (
                       <div className='flex items-center gap-3 flex-1 min-w-0'>
-                        <img
-                          src={`${ctx.apiURL}/team/${m.team1.id}/logo`}
-                          alt={`${m.team1.name} logo`}
-                          onError={e => {
-                            e.currentTarget.src = withoutLogo;
-                          }}
+                        <Image
+                          url={`${m.team1.id}/logo`}
+                          name={m.team1.name}
                           onClick={e => {
                             e.stopPropagation();
                             navigate(`/team/${m?.team1?.id}`);
@@ -190,12 +187,9 @@ export default function Championship() {
                     </div>
                     {m.team2 && (
                       <div className='flex items-center gap-3 flex-1 min-w-0 flex-row-reverse text-right'>
-                        <img
-                          src={`${ctx.apiURL}/team/${m.team2.id}/logo`}
-                          alt={`${m.team2.name} logo`}
-                          onError={e => {
-                            e.currentTarget.src = withoutLogo;
-                          }}
+                        <Image
+                          url={`${m.team2.id}/logo`}
+                          name={m.team2.name}
                           onClick={e => {
                             e.stopPropagation();
                             navigate(`/team/${m?.team2?.id}`);

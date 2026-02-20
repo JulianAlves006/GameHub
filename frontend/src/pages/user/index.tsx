@@ -36,6 +36,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import Image from '@/components/Image';
 
 type ChampionshipResponse = {
   championships: Championship[];
@@ -447,9 +448,9 @@ export default function User() {
                   <FaUserAlt size={48} />
                 </div>
               ) : (
-                <img
-                  src={`${ctx.apiURL}/user/${id ? id : user?.id}/profilePicture`}
-                  alt={`Foto de perfil de ${name}`}
+                <Image
+                  url={`/user/${id ? id : user?.id}/profilePicture`}
+                  name={name}
                   className={cn(
                     'h-full w-full object-cover rounded-3xl transition-opacity duration-300'
                   )}

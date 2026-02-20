@@ -1,9 +1,7 @@
-import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
-import withoutLogo from '../../assets/withoutLogo.png';
-import Loading from '../loading';
+import Image from '../Image';
 import {
   Table as ShadcnTable,
   TableBody,
@@ -12,7 +10,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useApp } from '@/contexts/AppContext';
 
 interface Config {
   key: string;
@@ -39,26 +36,9 @@ export const Table = ({
   itemsPerPage = 10,
 }: TableProps) => {
   const navigate = useNavigate();
-  const ctx = useApp();
-  const [loadingImages, setLoadingImages] = useState<Record<number, boolean>>(
-    {}
-  );
 
   function handleClick(id: number) {
     navigate(`/team/${id}`);
-  }
-
-  function handleImageLoad(id: number) {
-    setLoadingImages(prev => ({ ...prev, [id]: false }));
-  }
-
-  function handleImageStartLoad(id: number) {
-    setLoadingImages(prev => {
-      if (prev[id] === undefined) {
-        return { ...prev, [id]: true };
-      }
-      return prev;
-    });
   }
 
   const linkClassName = cn(
@@ -118,36 +98,15 @@ export const Table = ({
                         </Link>
                       </b>
                     ) : conf.key === 'logo' && isTeams ? (
-                      <div className='relative inline-block'>
-                        {(loadingImages[d.id as number] === undefined ||
-                          loadingImages[d.id as number]) && (
-                          <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10'>
-                            <Loading size='sm' />
-                          </div>
+                      <Image
+                        url={`${d.id}/logo`}
+                        name={(d.name as string) ?? 'Time'}
+                        className={cn(
+                          'w-20 h-20 object-cover rounded-lg cursor-pointer',
+                          'transition-opacity duration-300'
                         )}
-                        <img
-                          className={cn(
-                            'w-20 h-20 object-cover rounded-lg cursor-pointer',
-                            'transition-opacity duration-300',
-                            loadingImages[d.id as number] === false
-                              ? 'opacity-100'
-                              : 'opacity-0'
-                          )}
-                          src={`${ctx.apiURL}/team/${d.id}/logo`}
-                          alt={`${d.name} logo`}
-                          onLoad={() => handleImageLoad(d.id as number)}
-                          onError={e => {
-                            e.currentTarget.src = withoutLogo;
-                            handleImageLoad(d.id as number);
-                          }}
-                          onLoadStart={() => {
-                            if (loadingImages[d.id as number] === undefined) {
-                              handleImageStartLoad(d.id as number);
-                            }
-                          }}
-                          onClick={() => handleClick(d.id as number)}
-                        />
-                      </div>
+                        onClick={() => handleClick(d.id as number)}
+                      />
                     ) : (
                       (d[conf.key] as React.ReactNode)
                     )}

@@ -8,10 +8,8 @@ import {
 } from '../ui/card';
 import { ChevronRight, Trophy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import Loading from '../loading';
-import withoutLogo from '../../assets/withoutLogo.png';
-import { useMemo, useState } from 'react';
-import { useApp } from '@/contexts/AppContext';
+import { useMemo } from 'react';
+import Image from '../Image';
 
 type MatchCardProps = {
   data: {
@@ -33,8 +31,6 @@ type MatchCardProps = {
 
 export default function MatchCard({ data, className }: MatchCardProps) {
   const navigate = useNavigate();
-  const ctx = useApp();
-  const [imageLoading, setImageLoading] = useState(true);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -111,23 +107,10 @@ export default function MatchCard({ data, className }: MatchCardProps) {
                 'sm:h-14 sm:w-14 md:h-16 md:w-16'
               )}
             >
-              {imageLoading && (
-                <div className='absolute inset-0 flex items-center justify-center'>
-                  <Loading size='sm' />
-                </div>
-              )}
-              <img
-                src={`${ctx.apiURL}/team/${data.team1Id}/logo`}
-                alt={`Logo do time ${data.team1Name}`}
-                className={cn(
-                  'h-full w-full object-cover transition-opacity duration-300',
-                  imageLoading ? 'opacity-0' : 'opacity-100'
-                )}
-                onLoad={() => setImageLoading(false)}
-                onError={e => {
-                  e.currentTarget.src = withoutLogo;
-                  setImageLoading(false);
-                }}
+              <Image
+                url={`${data.team1Id}/logo`}
+                name={data.team1Name}
+                className='h-full w-full object-cover transition-opacity duration-300'
               />
             </div>
             <p>{data.team1Name}</p>
@@ -147,23 +130,10 @@ export default function MatchCard({ data, className }: MatchCardProps) {
                 'sm:h-14 sm:w-14 md:h-16 md:w-16'
               )}
             >
-              {imageLoading && (
-                <div className='absolute inset-0 flex items-center justify-center'>
-                  <Loading size='sm' />
-                </div>
-              )}
-              <img
-                src={`${ctx.apiURL}/team/${data.team2Id}/logo`}
-                alt={`Logo do time ${data.team2Name}`}
-                className={cn(
-                  'h-full w-full object-cover transition-opacity duration-300',
-                  imageLoading ? 'opacity-0' : 'opacity-100'
-                )}
-                onLoad={() => setImageLoading(false)}
-                onError={e => {
-                  e.currentTarget.src = withoutLogo;
-                  setImageLoading(false);
-                }}
+              <Image
+                url={`${data.team2Id}/logo`}
+                name={data.team2Name}
+                className='h-full w-full object-cover transition-opacity duration-300'
               />
             </div>
             <p>{data.team2Name}</p>

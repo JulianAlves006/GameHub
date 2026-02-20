@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../components/ui/select';
-import withoutLogo from '../../../assets/withoutLogo.png';
+import Image from '@/components/Image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Trophy, Swords, Play, Square } from 'lucide-react';
 
@@ -499,23 +499,16 @@ export default function Match() {
                 {match[0].team1 && (
                   <div className='flex flex-col gap-4 flex-1 min-w-[150px]'>
                     <div className='flex items-center'>
-                      {match[0].team1.logo && (
-                        <img
-                          src={`${ctx.apiURL}/team/${match[0].team1.id}/logo`}
-                          alt={match[0].team1.name}
-                          onClick={() =>
-                            navigate(`/team/${match[0].team1?.id}`)
-                          }
-                          className={cn(
-                            'w-20 h-20 object-cover rounded-xl cursor-pointer',
-                            'border-2 border-secondary shadow-md',
-                            'transition-transform hover:scale-105'
-                          )}
-                          onError={e => {
-                            e.currentTarget.src = withoutLogo;
-                          }}
-                        />
-                      )}
+                      <Image
+                        url={`${match[0].team1.id}/logo`}
+                        name={match[0].team1.name}
+                        onClick={() => navigate(`/team/${match[0].team1?.id}`)}
+                        className={cn(
+                          'w-20 h-20 object-cover rounded-xl cursor-pointer',
+                          'border-2 border-secondary shadow-md',
+                          'transition-transform hover:scale-105'
+                        )}
+                      />
                       <Button
                         variant='ghost'
                         onClick={() =>
@@ -546,23 +539,16 @@ export default function Match() {
                 {match[0].team2 && (
                   <div className='flex flex-col gap-4 flex-1 min-w-[150px]'>
                     <div className='flex flex-row-reverse items-center'>
-                      {match[0].team2.logo && (
-                        <img
-                          src={`${ctx.apiURL}/team/${match[0].team2.id}/logo`}
-                          alt={match[0].team2.name}
-                          onClick={() =>
-                            navigate(`/team/${match[0].team2?.id}`)
-                          }
-                          className={cn(
-                            'w-20 h-20 object-cover rounded-xl cursor-pointer',
-                            'border-2 border-secondary shadow-md',
-                            'transition-transform hover:scale-105'
-                          )}
-                          onError={e => {
-                            e.currentTarget.src = withoutLogo;
-                          }}
-                        />
-                      )}
+                      <Image
+                        url={`${match[0].team2.id}/logo`}
+                        name={match[0].team2.name}
+                        onClick={() => navigate(`/team/${match[0].team2?.id}`)}
+                        className={cn(
+                          'w-20 h-20 object-cover rounded-xl cursor-pointer',
+                          'border-2 border-secondary shadow-md',
+                          'transition-transform hover:scale-105'
+                        )}
+                      />
                       <Button
                         variant='ghost'
                         onClick={() =>
@@ -617,16 +603,13 @@ export default function Match() {
                   </span>
                 </div>
                 {match[0]?.winner?.id && (
-                  <img
-                    src={`${ctx.apiURL}/team/${match[0].winner.id}/logo`}
-                    alt={winner}
+                  <Image
+                    url={`${match[0].winner.id}/logo`}
+                    name={winner}
                     className={cn(
                       'w-24 h-24 object-cover rounded-xl',
                       'border-2 border-secondary shadow-md'
                     )}
-                    onError={e => {
-                      e.currentTarget.src = withoutLogo;
-                    }}
                   />
                 )}
               </CardContent>
@@ -719,19 +702,20 @@ export default function Match() {
                         >
                           <span>{g?.user?.name}</span>
                           <span>-</span>
-                          <img
-                            src={`${ctx.apiURL}/team/${g?.team?.id}/logo`}
-                            alt={match[0].team1.name}
-                            onClick={() => navigate(`/team/${g?.team?.id}`)}
-                            className={cn(
-                              'w-10 h-10 object-cover rounded-xl cursor-pointer',
-                              'border-2 border-secondary shadow-md',
-                              'transition-transform hover:scale-105'
-                            )}
-                            onError={e => {
-                              e.currentTarget.src = withoutLogo;
-                            }}
-                          />
+                          {g?.team && (
+                            <Image
+                              url={`${g.team.id}/logo`}
+                              name={g.team.name ?? 'Time'}
+                              onClick={() =>
+                                navigate(`/team/${g.team?.id ?? ''}`)
+                              }
+                              className={cn(
+                                'w-10 h-10 object-cover rounded-xl cursor-pointer',
+                                'border-2 border-secondary shadow-md',
+                                'transition-transform hover:scale-105'
+                              )}
+                            />
+                          )}
                         </SelectItem>
                       ))}
                     </SelectGroup>

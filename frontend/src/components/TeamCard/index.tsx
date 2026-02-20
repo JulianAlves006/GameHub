@@ -1,10 +1,7 @@
-import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Trophy, Medal, Award, TrendingUp, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import withoutLogo from '../../assets/withoutLogo.png';
-import Loading from '../loading';
-import { useApp } from '@/contexts/AppContext';
+import Image from '../Image';
 interface TeamCardProps {
   id: number;
   position: number;
@@ -53,8 +50,6 @@ export function TeamCard({
   isTopThree = false,
 }: TeamCardProps) {
   const navigate = useNavigate();
-  const ctx = useApp();
-  const [imageLoading, setImageLoading] = useState(true);
 
   const handleClick = () => {
     navigate(`/team/${id}`);
@@ -102,23 +97,12 @@ export function TeamCard({
           isTopThree ? 'border-primary/30' : 'border-border'
         )}
       >
-        {imageLoading && (
-          <div className='absolute inset-0 flex items-center justify-center'>
-            <Loading size='sm' />
-          </div>
-        )}
-        <img
-          src={`${ctx.apiURL}/team/${id}/logo`}
-          alt={`Logo do time ${name}`}
+        <Image
+          url={`${id}/logo`}
+          name={name}
           className={cn(
-            'h-full w-full object-cover transition-opacity duration-300',
-            imageLoading ? 'opacity-0' : 'opacity-100'
+            'h-full w-full object-cover transition-opacity duration-300'
           )}
-          onLoad={() => setImageLoading(false)}
-          onError={e => {
-            e.currentTarget.src = withoutLogo;
-            setImageLoading(false);
-          }}
         />
       </div>
 

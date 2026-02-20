@@ -4,7 +4,7 @@ import api from '../../../services/axios';
 import { Table } from '../../../components/Table';
 import { toast } from 'sonner';
 import Loading from '../../../components/loading';
-import { FaCheck, FaTimesCircle, FaUserAlt } from 'react-icons/fa';
+import { FaCheck, FaTimesCircle } from 'react-icons/fa';
 import { formatMetricsForChart } from '../../../services/utils';
 import RadarChart from '../../../components/RadarChart';
 import FileInput from '../../../components/FileInput';
@@ -16,8 +16,7 @@ import { Input } from '../../../components/ui/input';
 import { isAxiosError } from 'axios';
 import { Card, CardContent } from '@/components/ui/card';
 import { Crown, Edit } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import withoutLogo from '@/assets/withoutLogo.png';
+import Image from '@/components/Image';
 
 export default function Team() {
   const { id } = useParams();
@@ -45,9 +44,6 @@ export default function Team() {
   const [logo, setLogo] = useState<File | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [teamMetrics, setTeamMetrics] = useState<Record<string, number>>({});
-  const [logoLoading, setLogoLoading] = useState(true);
-  const [imageLoading, setImageLoading] = useState(true);
-  const [imageError, setImageError] = useState(false);
   const { createNotifications } = useNotifications({ setLoading });
 
   const haveTeamIsgamer =
@@ -77,7 +73,6 @@ export default function Team() {
     async function getTeam() {
       if (!id) return;
       setLoading(true);
-      setLogoLoading(true);
       try {
         const { data } = await api.get(`team?id=${id}`);
         setTeam(data.teams[0]);
@@ -346,23 +341,10 @@ export default function Team() {
         <div className='absolute bottom-0 left-0 right-0 p-10 flex flex-col md:flex-row items-end justify-between'>
           <div className='flex items-center gap-8'>
             <div className='relative w-32 h-32 border border-secondary rounded-3xl flex items-center justify-center shadow-secondary overflow-hidden'>
-              {logoLoading && (
-                <div className='h-full w-full absolute inset-0 flex items-center justify-center z-10 bg-background/50'>
-                  <Loading className='bg-transparent border-none' />
-                </div>
-              )}
-              <img
-                src={`${ctx.apiURL}/team/${id}/logo`}
-                alt={`Logo do time ${name}`}
-                className={cn(
-                  'h-full w-full object-cover rounded-3xl transition-opacity duration-300',
-                  logoLoading ? 'opacity-0' : 'opacity-100'
-                )}
-                onLoad={() => setLogoLoading(false)}
-                onError={e => {
-                  e.currentTarget.src = withoutLogo;
-                  setLogoLoading(false);
-                }}
+              <Image
+                url={`${id}/logo`}
+                name={name}
+                className='h-full w-full object-cover rounded-3xl transition-opacity duration-300'
               />
             </div>
             <div className='flex items-center gap-10'>
@@ -473,33 +455,11 @@ export default function Team() {
                 </div>
                 <CardContent className='flex flex-col items-center mt-5 gap-5'>
                   <div className='relative w-32 h-32 rounded-3xl bg-muted border-4 border-card shadow-2xl overflow-hidden flex items-center justify-center'>
-                    {imageLoading && !imageError && (
-                      <div className='absolute inset-0 flex items-center justify-center z-10 bg-background/50'>
-                        <div className='w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin' />
-                      </div>
-                    )}
-                    {imageError ? (
-                      <div className='w-full h-full flex items-center justify-center text-muted-foreground bg-muted'>
-                        <FaUserAlt size={48} />
-                      </div>
-                    ) : (
-                      <img
-                        src={`${ctx.apiURL}/user/${team?.gamer?.user?.id}/profilePicture`}
-                        alt={`Foto de perfil de ${team?.gamer?.user?.name || 'Responsável'}`}
-                        className={cn(
-                          'w-full h-full object-cover transition-opacity duration-300',
-                          imageLoading ? 'opacity-0' : 'opacity-100'
-                        )}
-                        onLoad={() => {
-                          setImageLoading(false);
-                          setImageError(false);
-                        }}
-                        onError={() => {
-                          setImageError(true);
-                          setImageLoading(false);
-                        }}
-                      />
-                    )}
+                    <Image
+                      url={`/user/${team?.gamer?.user?.id}/profilePicture`}
+                      name={team?.gamer?.user?.name ?? 'Responsável'}
+                      className='w-full h-full object-cover transition-opacity duration-300'
+                    />
                   </div>
                   <div className='flex flex-col items-center'>
                     <span className='text-2xl md:text-3xl font-bold truncate'>
