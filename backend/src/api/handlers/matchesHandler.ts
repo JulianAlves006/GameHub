@@ -4,7 +4,7 @@ import {
   createMatch,
   deleteMatch,
   getMatches,
-  getMatchesPlayingFinishedCount,
+  getMatchesCount,
   updateMatch,
 } from '../repositories/matchesRepository.ts';
 import { updateMatchesService } from '../services/matchesService.ts';
@@ -14,13 +14,13 @@ import {
   updateMatchValidation,
 } from '../validations/validations.ts';
 
-export async function getMatchesPlayingFinishedCountHandler() {
+export async function getMatchesCountHandler() {
   try {
-    const response = getMatchesPlayingFinishedCount();
+    const response = getMatchesCount();
     return response;
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error('Erro no getMatchesPlayingFinishedCountHandler:', error);
+    console.error('Erro no getMatchesCountHandler:', error);
     throw new Error(
       error instanceof Error
         ? error.message
@@ -96,7 +96,7 @@ export async function updateMatchHandler(
     updateMatchValidation(id, user);
 
     const response = await updateMatch(body, user);
-    const matchesCount = await getMatchesPlayingFinishedCount();
+    const matchesCount = await getMatchesCount();
 
     updateMatchesService(matchesCount);
 

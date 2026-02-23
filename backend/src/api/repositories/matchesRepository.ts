@@ -3,14 +3,15 @@ import { Championship, Match, Metric, Team } from '../entities/index.ts';
 
 const matchRepository = AppDataSource.getRepository(Match);
 
-export async function getMatchesPlayingFinishedCount() {
+export async function getMatchesCount() {
+  const matchesCount = await matchRepository.count();
   const playingCount = await matchRepository.count({
     where: { status: 'playing' },
   });
   const finishedCount = await matchRepository.count({
     where: { status: 'finished' },
   });
-  return { playing: playingCount, finished: finishedCount };
+  return { matchesCount, playing: playingCount, finished: finishedCount };
 }
 
 export async function getMatches(

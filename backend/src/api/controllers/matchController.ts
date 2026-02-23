@@ -4,8 +4,7 @@ import * as matchHandler from '../handlers/matchesHandler.ts';
 class MatchController {
   getMatchesPlayingFinished = async (req: any, res: Response) => {
     try {
-      const response =
-        await matchHandler.getMatchesPlayingFinishedCountHandler();
+      const response = await matchHandler.getMatchesCountHandler();
       res.status(200).json(response);
     } catch (error: any) {
       return res.status(500).json({ error: error.message });

@@ -120,7 +120,6 @@ export default function Matches() {
       const { data } = await api.get(endpoint);
 
       const matchesnow = data.matches;
-      setCount(data.pagination.totalCount);
       setTotalPages(data.pagination.totalPages);
 
       processMatches(matchesnow);
@@ -149,10 +148,13 @@ export default function Matches() {
     async function getPlayingFinishedCount() {
       setLoading(true);
       try {
-        const { data } = await api.get<{ playing: number; finished: number }>(
-          '/matchesCount'
-        );
+        const { data } = await api.get<{
+          matchesCount: number;
+          playing: number;
+          finished: number;
+        }>('/matchesCount');
 
+        setCount(data.matchesCount);
         setPlayingCount(data.playing);
         setFinishedCount(data.finished);
       } catch (error) {
@@ -211,10 +213,12 @@ export default function Matches() {
 
     // Função para atualizar as partidas quando receber evento do socket
     const handleMatchesUpdate = async (data: {
+      matchesCount: number;
       playing: number;
       finished: number;
     }) => {
       // Atualiza os contadores
+      setCount(data.matchesCount);
       setPlayingCount(data.playing);
       setFinishedCount(data.finished);
 
