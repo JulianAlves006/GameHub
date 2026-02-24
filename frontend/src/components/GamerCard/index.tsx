@@ -1,8 +1,9 @@
 import { cn } from '@/lib/utils';
 import { ChevronRight, Trophy } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Image from '../Image';
 
 interface Metric {
   id: number;
@@ -52,6 +53,7 @@ export default function GamerCard({
   bestGamerID,
 }: GamerCardProps) {
   const navigate = useNavigate();
+  const [imgError, setImgError] = useState(false);
   // Calcula as estatísticas somando as métricas por tipo
   const stats = useMemo(() => {
     const result = {
@@ -116,16 +118,27 @@ export default function GamerCard({
       </div>
 
       <div className='relative'>
-        <Avatar className='h-9 w-9 shrink-0 border-2 border-border sm:h-10 sm:w-10 md:h-12 md:w-12'>
-          <AvatarImage src={'/img.png'} alt={data.name} />
-          <AvatarFallback className='bg-secondary text-xs text-foreground sm:text-sm'>
-            {data.name
-              .split(' ')
-              .map(n => n[0])
-              .join('')
-              .slice(0, 2)}
-          </AvatarFallback>
-        </Avatar>
+        {imgError ? (
+          <Avatar className='h-9 w-9 shrink-0 border-2 border-border sm:h-10 sm:w-10 md:h-12 md:w-12'>
+            <AvatarImage src={'/img.png'} alt={data.name} />
+            <AvatarFallback className='bg-secondary text-xs text-foreground sm:text-sm'>
+              {data.name
+                .split(' ')
+                .map(n => n[0])
+                .join('')
+                .slice(0, 2)}
+            </AvatarFallback>
+          </Avatar>
+        ) : (
+          <Image
+            className='h-9 w-9 border-2 border-border md:h-12 md:w-12 rounded-full object-cover'
+            url={`/user/${data.userID}/profilePicture`}
+            name={data.name}
+            onError={() => {
+              setImgError(true);
+            }}
+          />
+        )}
 
         {position === 1 && data.id === bestGamerID && (
           <Trophy size={14} className='absolute top-0 right-0 text-gold' />
